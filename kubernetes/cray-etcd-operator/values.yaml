@@ -28,6 +28,9 @@ etcd-operator:
     image:
       repository: dtr.dev.cray.com/cray/etcd-operator
       tag: 0.12.1-cray # Pin here so we don't accidentally rev with chart updates
+    resources:
+      cpu: 100m
+      memory: 512Mi
 
   etcdCluster:
     version: 3.3.22
