@@ -5,9 +5,9 @@ metadata:
   name: etcd-backup-restore
   namespace: operators
 spec:
-  replicas: {{ .Values.crayEtcdBackup.replicas }}
+  replicas: {{ .Values.replicas }}
   strategy:
-    {{- .Values.crayEtcdBackup.strategy | toYaml | nindent 4}}
+    {{- .Values.strategy | toYaml | nindent 4}}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "cray-etcd-backup.fullname" . }}
@@ -34,7 +34,8 @@ spec:
             topologyKey: kubernetes.io/hostname
       initContainers:
         - name: init
-          image: "{{ .Values.crayEtcdBackup.imageRegistry }}/loftsman/docker-kubectl:{{ .Values.crayEtcdBackup.kubectlImageVersion }}"
+          image: {{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}
+          imagePullPolicy: {{ .Values.kubectl.image.pullPolicy }}
           command:
             - /bin/sh
             - -c
@@ -44,7 +45,8 @@ spec:
               mountPath: /usr/local/sbin
       containers:
         - name: util
-          image: "{{ .Values.crayEtcdBackup.imageRegistry }}/loftsman/docker-kubectl:{{ .Values.crayEtcdBackup.kubectlImageVersion }}"
+          image: {{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}
+          imagePullPolicy: {{ .Values.kubectl.image.pullPolicy }}
           command:
             - /bin/sh
             - -c
@@ -55,7 +57,8 @@ spec:
             - name: etcd-backup-restore-aws-config
               mountPath: /conf
         - name: boto3
-          image: "{{ .Values.crayEtcdBackup.imageRegistry }}/demisto/boto3py3:{{ .Values.crayEtcdBackup.boto3ImageVersion }}"
+          image: {{ .Values.boto3.image.repository }}:{{ .Values.boto3.image.tag }}
+          imagePullPolicy: {{ .Values.boto3.image.pullPolicy }}
           command:
             - /bin/sh
             - -c
