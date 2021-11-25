@@ -4,8 +4,9 @@
 
 kubectl:
   image:
-    repository: dtr.dev.cray.com/loftsman/loftsman
-    tag: 0.5.1
+    repository: artifactory.algol60.net/csm-docker/stable/docker-kubectl
+    tag: 1.19.15
+    pullPolicy: IfNotPresent
 
 etcd-operator:
   etcdOperator:
@@ -35,4 +36,7 @@ etcd-operator:
   etcdCluster:
     version: 3.3.22
     image:
-      tag: v3.3.22 # Pin here so we don't accidentally rev with chart updates
+      repository: artifactory.algol60.net/csm-docker/stable/quay.io/coreos/etcd
+      tag: v3.3.22
+    pod:
+      busyboxImage: artifactory.algol60.net/csm-docker/stable/docker.io/library/busybox:1.28.0-glibc

@@ -5,11 +5,15 @@
 nameOverride: ""
 fullnameOverride: ""
 
+kubectl:
+  image:
+    repository: artifactory.algol60.net/csm-docker/stable/docker-kubectl
+    tag: 1.19.15
+    pullPolicy: IfNotPresent
+
 crayEtcdDefrag:
   namespace: "operators"
   defragCronSchedule: "0 0 * * *"
-  imageRegistry: "dtr.dev.cray.com"
-  imageVersion: "0.2.0"
 
 crayHbtdEtcdDefrag:
   defragCronSchedule: "0 */4 * * *"
