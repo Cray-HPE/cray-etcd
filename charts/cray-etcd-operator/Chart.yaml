@@ -11,7 +11,7 @@ maintainers:
   - name: bklei
   - name: brantk-hpe
   - name: kimjensen-hpe
-appVersion: 0.12.2-cray
+appVersion: 0.12.3-cray
 annotations:
   artifacthub.io/images: |
     - name: kubectl
