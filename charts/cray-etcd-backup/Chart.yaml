@@ -12,5 +12,5 @@ annotations:
     - name: kubectl
       image: artifactory.algol60.net/csm-docker/stable/docker-kubectl:1.19.15
     - name: boto3
-      image: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3:1.0.0.16140
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3:1.0.0.24037
   artifacthub.io/license: MIT

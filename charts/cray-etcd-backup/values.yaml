@@ -8,7 +8,7 @@ fullnameOverride: ""
 boto3:
   image:
     repository: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3
-    tag: "1.0.0.16140"
+    tag: "1.0.0.24037"
     pullPolicy: IfNotPresent
 
 kubectl:
