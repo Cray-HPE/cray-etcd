@@ -1,0 +1,14 @@
+apiVersion: v2
+name: cray-etcd-defrag
+version: 0.3.0
+description: Defrags etcd clusters
+home: https://github.com/Cray-HPE/cray-etcd
+maintainers:
+  - name: bklei
+  - name: brantk-hpe
+  - name: kimjensen-hpe
+annotations:
+  artifacthub.io/images: |
+    - name: kubectl
+      image: artifactory.algol60.net/csm-docker/stable/docker-kubectl:1.19.15
+  artifacthub.io/license: MIT

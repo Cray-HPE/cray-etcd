@@ -14,29 +14,26 @@ pipeline {
         NAME = "cray-etcd"
         DESCRIPTION = "Deploys the etcd operator and other utilities to the Cray system."
         IS_STABLE = getBuildIsStable()
-        CHART_NAME_1 = "cray-etcd-backup"
-        CHART_NAME_2 = "cray-etcd-defrag"
-        CHART_NAME_3 = "cray-etcd-operator"
-        CHART_VERSION_1 = getChartVersion(name: env.CHART_NAME_1, isStable: env.IS_STABLE)
-        CHART_VERSION_2 = getChartVersion(name: env.CHART_NAME_2, isStable: env.IS_STABLE)
-        CHART_VERSION_3 = getChartVersion(name: env.CHART_NAME_3, isStable: env.IS_STABLE)
     }
 
     stages {
         stage("Build") {
-            parallel {
-                stage("Charts") {
-                    steps {
-                        sh "make charts"
-                    }
-                }
+            environment {
+                CHART_VERSIONS = [
+                    getChartVersion(name: "cray-etcd-backup",   chartDirectory: "charts", isStable: env.IS_STABLE),
+                    getChartVersion(name: "cray-etcd-defrag",   chartDirectory: "charts", isStable: env.IS_STABLE),
+                    getChartVersion(name: "cray-etcd-operator", chartDirectory: "charts", isStable: env.IS_STABLE)
+                ].join(" ")
+            }
+            steps {
+                sh "make"
             }
         }
 
         stage("Publish") {
             steps {
                 script {
-                    publishCsmHelmCharts(component: env.NAME, chartsPath: "${WORKSPACE}/kubernetes/.packaged", isStable: env.IS_STABLE)
+                    publishCsmHelmCharts(component: env.NAME, chartsPath: "${WORKSPACE}/packages", isStable: env.IS_STABLE)
                 }
             }
         }

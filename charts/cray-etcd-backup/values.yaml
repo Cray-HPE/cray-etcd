@@ -1,0 +1,25 @@
+# Default values for cray-etcd-backup
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+boto3:
+  image:
+    repository: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3
+    tag: "1.0.0.24037"
+    pullPolicy: IfNotPresent
+
+kubectl:
+  image:
+    repository: artifactory.algol60.net/csm-docker/stable/docker-kubectl
+    tag: 1.19.15
+    pullPolicy: IfNotPresent
+
+crayEtcdBackup:
+  periodicCronSchedule: "0 * * * *"
+
+replicas: 2  # Two pods so we are resilient to one worker dropping
+strategy:
+  type: Recreate

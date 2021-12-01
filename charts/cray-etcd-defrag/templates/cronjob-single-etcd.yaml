@@ -16,7 +16,8 @@ spec:
           serviceAccountName: "etcd-defrag"
           containers:
           - name: "kube-etcd-defrag-{{ .Values.crayHbtdEtcdDefrag.etcdClusterName }}"
-            image: "{{ .Values.crayEtcdDefrag.imageRegistry }}/loftsman/docker-kubectl:{{ .Values.crayEtcdDefrag.imageVersion }}"
+            image: {{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}
+            imagePullPolicy: {{ .Values.kubectl.image.pullPolicy }}
             command:
               - /bin/sh
               - -c

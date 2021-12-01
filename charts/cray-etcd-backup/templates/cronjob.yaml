@@ -16,7 +16,8 @@ spec:
           serviceAccountName: "etcd-backup-restore"
           containers:
           - name: kube-etcd-periodic-backup-cron
-            image: "{{ .Values.crayEtcdBackup.imageRegistry }}/loftsman/docker-kubectl:{{ .Values.crayEtcdBackup.kubectlImageVersion }}"
+            image: {{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}
+            imagePullPolicy: {{ .Values.kubectl.image.pullPolicy }}
             command:
               - /bin/sh
               - -c

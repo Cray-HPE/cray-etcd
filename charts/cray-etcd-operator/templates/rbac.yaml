@@ -9,8 +9,8 @@ kind: ClusterRole
 metadata:
   name: cray-etcd-operator-jobs-cluster-role
 rules:
-- apiGroups: [""]
-  resources: ["pods"]
+- apiGroups: ["", "apps"]
+  resources: ["pods", "deployments"]
   verbs: ["get", "list"]
 ---
 kind: ClusterRoleBinding
