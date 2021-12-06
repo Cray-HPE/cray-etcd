@@ -1,6 +1,6 @@
 apiVersion: v2
 name: cray-etcd-operator
-version: 0.17.0
+version: 0.17.1
 description: An extension of the official etcd-operator helm chart
 home: https://github.com/Cray-HPE/cray-etcd
 dependencies:
@@ -11,13 +11,13 @@ maintainers:
   - name: bklei
   - name: brantk-hpe
   - name: kimjensen-hpe
-appVersion: 0.12.3-cray
+appVersion: 0.12.4-cray
 annotations:
   artifacthub.io/images: |
     - name: kubectl
       image: artifactory.algol60.net/csm-docker/stable/docker-kubectl:1.19.15
     - name: etcd-operator
-      image: artifactory.algol60.net/csm-docker/stable/etcd-operator:0.12.3-cray
+      image: artifactory.algol60.net/csm-docker/stable/etcd-operator:0.12.4-cray
     - name: etcd
       image: artifactory.algol60.net/csm-docker/stable/quay.io/coreos/etcd:v3.3.22
     - name: busybox

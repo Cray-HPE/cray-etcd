@@ -14,21 +14,21 @@ etcd-operator:
       cluster-wide: true
     image:
       repository: artifactory.algol60.net/csm-docker/stable/etcd-operator
-      tag: 0.12.3-cray
+      tag: 0.12.4-cray
 
   restoreOperator:
     commandArgs:
       cluster-wide: true
     image:
       repository: artifactory.algol60.net/csm-docker/stable/etcd-operator
-      tag: 0.12.3-cray
+      tag: 0.12.4-cray
 
   backupOperator:
     commandArgs:
       cluster-wide: true
     image:
       repository: artifactory.algol60.net/csm-docker/stable/etcd-operator
-      tag: 0.12.3-cray
+      tag: 0.12.4-cray
     resources:
       cpu: 100m
       memory: 512Mi

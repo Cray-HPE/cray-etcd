@@ -27,4 +27,4 @@ spec:
             - '/bin/sh'
           args:
             - '-c'
-            - 'kubectl rollout status deployment -n operators cray-etcd-operator-etcd-operator-etcd-backup-operator cray-etcd-operator-etcd-operator-etcd-operator cray-etcd-operator-etcd-operator-etcd-restore-operator --timeout=15m'
+            - 'kubectl rollout status deployment -n operators cray-etcd-operator-etcd-operator-etcd-backup-operator; kubectl rollout status deployment -n operators cray-etcd-operator-etcd-operator-etcd-operator; kubectl rollout status deployment -n operators  cray-etcd-operator-etcd-operator-etcd-restore-operator'
