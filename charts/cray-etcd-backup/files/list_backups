@@ -15,9 +15,12 @@ def main():
     s3 = boto3.client('s3', endpoint_url=s3_endpoint)
 
     response = s3.list_objects_v2(Bucket=backup_bucket)
-    for item in response['Contents']:
-        if args.project in item['Key']:
-            print(item['Key'])
+    if 'Contents' in response:
+        for item in response['Contents']:
+            if args.project in item['Key']:
+                print(item['Key'])
+    else:
+        print("No backups available yet.")
 
 if __name__ == '__main__':
     main()
