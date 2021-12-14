@@ -68,6 +68,10 @@ spec:
               mountPath: /usr/local/sbin
             - name: etcd-backup-restore-aws-config
               mountPath: /conf
+      securityContext:
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
       volumes:
         - name: etcd-backup-restore-config
           configMap:
