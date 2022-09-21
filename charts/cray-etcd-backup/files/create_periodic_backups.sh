@@ -32,6 +32,7 @@ spec:
   backupPolicy:
     backupIntervalInSecond: $seconds
     maxBackups: $num_backups
+    timeoutInSecond: 600
   s3:
     path: etcd-backup/$project/etcd.backup
     awsSecret: etcd-backup-restore-aws-config
@@ -51,6 +52,7 @@ spec:
   etcdEndpoints: [http://$ip:2379]
   storageType: S3
   backupPolicy:
+    timeoutInSecond: 600
     backupIntervalInSecond: $seconds
     maxBackups: $num_backups
   s3:
