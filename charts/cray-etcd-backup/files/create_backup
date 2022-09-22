@@ -63,6 +63,8 @@ spec:
     awsSecret: etcd-backup-restore-aws-config
     forcePathStyle: true
     endpoint: $s3_endpoint
+  backupPolicy:
+    timeoutInSecond: 600
 EOF
 
 else
@@ -81,6 +83,8 @@ spec:
     awsSecret: etcd-backup-restore-aws-config
     forcePathStyle: true
     endpoint: $s3_endpoint
+  backupPolicy:
+    timeoutInSecond: 600
 EOF
 
 fi
