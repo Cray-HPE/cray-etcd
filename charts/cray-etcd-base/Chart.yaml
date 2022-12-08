@@ -22,28 +22,20 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 apiVersion: v2
-name: cray-etcd-operator
-version: 0.18.1
-description: An extension of the official etcd-operator helm chart
+name: cray-etcd-base
+version: 1.0.0
+description: This chart should never be installed directly, instead it is intended to be a sub-chart.
 home: https://github.com/Cray-HPE/cray-etcd
 dependencies:
-  - name: etcd-operator
-    version: 0.11.2
-    repository: file://charts/etcd-operator
+  - name: etcd
+    version: 8.5.10
+    repository: https://charts.bitnami.com/bitnami
 maintainers:
   - name: bklei
-  - name: kimjensen-hpe
-appVersion: 0.13.0-cray
 annotations:
   artifacthub.io/images: |
-    - name: kubectl
-      image: artifactory.algol60.net/csm-docker/stable/docker-kubectl:1.19.15
-    - name: etcd-operator
-      image: artifactory.algol60.net/csm-docker/stable/etcd-operator:0.13.0-cray
     - name: etcd
-      image: artifactory.algol60.net/csm-docker/stable/quay.io/coreos/etcd:v3.3.22
-    - name: busybox
-      image: artifactory.algol60.net/csm-docker/stable/docker.io/library/busybox:1.28.0-glibc
-    - name: curl
-      image: artifactory.algol60.net/csm-docker/stable/docker.io/curlimages/curl:7.73.0
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/bitnami/etcd:3.5.6-debian-11-r0
+    - name: bitnami-shell
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/bitnami/bitnami-shell:11-debian-11-r54
   artifacthub.io/license: MIT
