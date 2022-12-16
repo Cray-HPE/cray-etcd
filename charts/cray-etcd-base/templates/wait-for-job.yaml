@@ -1,0 +1,68 @@
+{{/*
+MIT License
+
+(C) Copyright 2022 Hewlett Packard Enterprise Development LP
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+*/}}
+{{- if .Values.etcd.enabled -}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "cray-etcd-base.fullname" . }}-wait-for-etcd-{{ .Release.Revision }}"
+  labels:
+    app.kubernetes.io/name: {{ include "cray-etcd-base.fullname" . }}-wait-for-etcd
+spec:
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: "etcd-watcher"
+          image: {{ .Values.etcd.image.registry }}/{{ .Values.etcd.image.repository }}:{{ .Values.etcd.image.tag }}
+          imagePullPolicy: {{ .Values.etcd.pullPolicy }}
+          command:
+          - /bin/sh
+          - -c
+          {{- if .Values.etcd.auth.client.secureTransport }}
+          - until etcdctl --ca-file /tls/ca.crt --cert-file /tls/tls.crt --key-file /tls/tls.key --endpoints https://$ETCD_HOST:$ETCD_PORT member list | grep started | wc -l | grep -q $ETCD_NUM_REPLICAS; do echo "Waiting for etcd cluster"; sleep 2; done; echo 'ETCD READY';
+          {{- else }}
+          - until etcdctl --endpoints http://$ETCD_HOST:$ETCD_PORT member list | grep started | wc -l | grep -q $ETCD_NUM_REPLICAS; do echo "Waiting for etcd cluster"; sleep 2; done; echo 'ETCD READY';
+          {{- end }}
+          env:
+            - name: ETCD_HOST
+              value: "{{ include "cray-etcd-base.fullname" . }}-etcd.{{ .Release.Namespace }}.svc"
+            - name: ETCD_PORT
+              value: "2379"
+            - name: ETCD_NUM_REPLICAS
+              value: "3"
+      {{- if .Values.etcd.auth.client.secureTransport }}
+          volumeMounts:
+          - name: tls
+            mountPath: "/tls"
+            readOnly: true
+      volumes:
+      - name: tls
+        secret:
+          secretName: "{{ include "cray-etcd-base.fullname" . }}-etcd-client-tls"
+      {{- end }}
+{{- end }}

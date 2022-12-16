@@ -1,0 +1,389 @@
+#
+# MIT License
+#
+# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+---
+suite: statefulset test for etcd enabled
+templates:
+  - charts/etcd/templates/statefulset.yaml
+  - charts/etcd/templates/token-secrets.yaml
+  - charts/etcd/templates/cronjob.yaml
+  - certificates.yaml
+tests:
+  - it: should render 1 etcd statefulset
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        hasDocuments:
+          count: 1
+  - it: should include default ETCD_* values in the container
+    set:
+      etcd.enabled: true
+      chart.name: "test-chart"
+      containers:
+        test-service:
+          name: test-service
+          image:
+            repository: test-service
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[0].value
+          value: "false"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[0].name
+          value: "BITNAMI_DEBUG"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[7].name
+          value: "ETCD_DISASTER_RECOVERY"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[7].value
+          value: "yes"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[20].name
+          value: "ETCD_INITIAL_CLUSTER_STATE"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[20].value
+          value: "new"
+  - it: should include nodeSelector when specified
+    set:
+      etcd.enabled: true
+      etcd.nodeSelector:
+        foo: bar
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.nodeSelector.foo
+          value: bar
+  - it: should include affinity when specified
+    set:
+      etcd.enabled: true
+      etcd.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/e2e-az-name
+                operator: In
+                values:
+                - e2e-az1
+                - e2e-az2
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: kubernetes.io/e2e-az-name
+  - it: should not include node selector by default
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        isNull:
+          path: spec.template.spec.nodeSelector
+  - it: should have default required antiAffinity
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey
+          value: "kubernetes.io/hostname"
+  - it: should enable auto compaction retention
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[18].name
+          value: "ETCD_AUTO_COMPACTION_RETENTION"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[18].value
+          value: "1"
+  - it: should enable auto compaction mode
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[17].name
+          value: "ETCD_AUTO_COMPACTION_MODE"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[17].value
+          value: "periodic"
+  - it: should enable heartbeat interval
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[23].name
+          value: "ETCD_HEARTBEAT_INTERVAL"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[23].value
+          value: "4200"
+  - it: should enable leader election timeout
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[24].name
+          value: "ETCD_ELECTION_TIMEOUT"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[24].value
+          value: "21000"
+  - it: should enable maximum snapshots
+    set:
+      etcd.enabled: true
+    asserts:
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[25].name
+          value: "ETCD_MAX_SNAPSHOTS"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[25].value
+          value: "5"
+  - it: should include 10GB max if maxQuota is set
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[26].name
+          value: "ETCD_QUOTA_BACKEND_BYTES"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[26].value
+          value: "10737418240"
+  - it: should support overriding ETCD_QUOTA_BACKEND_BYTES
+    set:
+      etcd.enabled: true
+      etcd.extraEnvVars[3]:
+        name: "ETCD_QUOTA_BACKEND_BYTES"
+        value: "12345" 
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[26].name
+          value: "ETCD_QUOTA_BACKEND_BYTES"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[26].value
+          value: "12345"
+  - it: should set ETCD_SNAPSHOT_COUNT to 10000 by default
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[27].name
+          value: "ETCD_SNAPSHOT_COUNT"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[27].value
+          value: "10000"
+  - it: should support overriding ETCD_SNAPSHOT_COUNT
+    set:
+      etcd.enabled: true
+      etcd.extraEnvVars[4]:
+        name: "ETCD_SNAPSHOT_COUNT"
+        value: "5" 
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[27].name
+          value: "ETCD_SNAPSHOT_COUNT"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[27].value
+          value: "5"
+  - it: should include hard/required podAntiAffinity (default)
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        isNotNull:
+          path: spec.template.spec.affinity.podAntiAffinity
+      - template: charts/etcd/templates/statefulset.yaml
+        isNotNull:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution
+  - it: should include soft/preferred podAntiAffinity when specified
+    set:
+      etcd.enabled: true
+      etcd.podAntiAffinityPreset: "soft"
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        isNotNull:
+          path: spec.template.spec.affinity.podAntiAffinity
+      - template: charts/etcd/templates/statefulset.yaml
+        isNotNull:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution
+  - it: should not include pod compute resources when not specified (default)
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        isNull:
+          path: spec.template.spec.resources
+  - it: should include etcd compute resources when specified
+    set:
+      etcd.enabled: true
+      etcd.resources:
+        limits:
+          cpu: 1
+          memory: 1Gi
+        requests:
+          cpu: 11m
+          memory: 44Mi
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 1
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 1Gi
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 11m
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 44Mi
+  - it: should enable TLS when set
+    set:
+      etcd.enabled: true
+      etcd.auth.client.secureTransport: true
+      etcd.auth.client.useAutoTLS: true
+      etcd.auth.client.existingSecret: "foo"
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[23].name
+          value: "ETCD_AUTO_TLS"
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[23].value
+          value: "true"
+      - template: charts/etcd/templates/cronjob.yaml
+        equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[6].name
+          value: "ETCD_CERT_FILE"
+      - template: charts/etcd/templates/cronjob.yaml
+        equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[6].value
+          value: "/opt/bitnami/etcd/certs/client/cert.pem"
+      - template: charts/etcd/templates/cronjob.yaml
+        equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].name
+          value: "ETCD_KEY_FILE"
+      - template: charts/etcd/templates/cronjob.yaml
+        equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].value
+          value: "/opt/bitnami/etcd/certs/client/key.pem"
+      - template: charts/etcd/templates/cronjob.yaml
+        equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].secret.secretName
+          value: "foo"
+  - it: should include priorityClassName when specified
+    set:
+      etcd.priorityClassName: csm-high-priority-service
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        equal:
+          path: spec.template.spec.priorityClassName
+          value: csm-high-priority-service
+  - it: should not include priorityClassName when not specified (default)
+    set:
+      etcd.enabled: true
+    asserts:
+      - template: charts/etcd/templates/statefulset.yaml
+        isNull:
+          path: spec.template.spec.priorityClassName
+  - it: should create TLS certificate requests for server cert when TLS is enabled
+    set:
+      etcd.enabled: true
+      etcd.auth.client:
+        secureTransport: true
+        existingSecret: "foo"
+    asserts:
+      - template: certificates.yaml
+        documentIndex: 0
+        equal:
+          path: spec.commonName
+          value: RELEASE-NAME-cray-etcd-base-NAMESPACE-server
+      - template: certificates.yaml
+        documentIndex: 0
+        equal:
+          path: spec.dnsNames
+          value:
+          - '*.RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc'
+          - '*.RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc.cluster.local'
+          - RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc
+          - RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc.cluster.local
+          - localhost
+      - template: certificates.yaml
+        documentIndex: 0
+        equal:
+          path: spec.issuerRef.name
+          value: cert-manager-issuer-common
+      - template: certificates.yaml
+        documentIndex: 1
+        equal:
+          path: spec.commonName
+          value: RELEASE-NAME-cray-etcd-base-NAMESPACE-peer
+      - template: certificates.yaml
+        documentIndex: 1
+        equal:
+          path: spec.dnsNames
+          value:
+          - '*.RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc'
+          - '*.RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc.cluster.local'
+      - template: certificates.yaml
+        documentIndex: 1
+        equal:
+          path: spec.issuerRef.name
+          value: cert-manager-issuer-common
+      - template: certificates.yaml
+        documentIndex: 2
+        equal:
+          path: spec.commonName
+          value: RELEASE-NAME-cray-etcd-base-NAMESPACE-client
+      - template: certificates.yaml
+        documentIndex: 2
+        equal:
+          path: spec.dnsNames

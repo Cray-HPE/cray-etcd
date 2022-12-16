@@ -1,0 +1,6 @@
+dependencies:
+- name: etcd
+  repository: https://charts.bitnami.com/bitnami
+  version: 8.5.10
+digest: sha256:5215ec8a51021c6068362abde070b2510e31bd5baef3e00b19e3ea61c65f0f7a
+generated: "2022-12-08T15:19:45.761559-07:00"

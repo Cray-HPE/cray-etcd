@@ -22,12 +22,12 @@ helm:
 lint:
 	CMD="lint charts/cray-etcd-backup"   $(MAKE) helm
 	CMD="lint charts/cray-etcd-defrag"   $(MAKE) helm
-	CMD="lint charts/cray-etcd-operator" $(MAKE) helm
+	CMD="lint charts/cray-etcd-base"     $(MAKE) helm
 
 dep-up:
 	CMD="dep up charts/cray-etcd-backup"   $(MAKE) helm
 	CMD="dep up charts/cray-etcd-defrag"   $(MAKE) helm
-	CMD="dep up charts/cray-etcd-operator" $(MAKE) helm
+	CMD="dep up charts/cray-etcd-base"     $(MAKE) helm
 
 test:
 	docker run --rm \
@@ -35,13 +35,13 @@ test:
 		${HELM_UNITTEST_IMAGE} -3 \
 		cray-etcd-backup \
 		cray-etcd-defrag \
-		cray-etcd-operator
+		cray-etcd-base
 
 package:
 ifdef CHART_VERSIONS
 	CMD="package charts/cray-etcd-backup   --version $(word 1, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
 	CMD="package charts/cray-etcd-defrag   --version $(word 2, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-operator --version $(word 3, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-base --version $(word 3, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
 else
 	CMD="package charts/* -d packages" $(MAKE) helm
 endif
@@ -58,7 +58,7 @@ annotated-images:
 images:
 	{ CHART=charts/cray-etcd-backup   $(MAKE) -s extracted-images annotated-images; \
 	  CHART=charts/cray-etcd-defrag   $(MAKE) -s extracted-images annotated-images; \
-	  CHART=charts/cray-etcd-operator $(MAKE) -s extracted-images annotated-images; \
+	  CHART=charts/cray-etcd-base     $(MAKE) -s extracted-images annotated-images; \
 	} | sort -u
 
 snyk:
