@@ -1,7 +1,7 @@
 {{/*
 MIT License
 
-(C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
+(C) Copyright 2023 Hewlett Packard Enterprise Development LP
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -21,35 +21,17 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 */}}
-{{- if .Values.etcd.enabled -}}
 ---
-apiVersion: "networking.istio.io/v1alpha3"
-kind: "DestinationRule"
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: "{{ include "cray-etcd-base.name" . }}-etcd-client-rule"
-  labels:
-    app.kubernetes.io/name: {{ include "cray-etcd-base.name" . }}-etcd
-    {{- include "cray-etcd-base.common-labels" . | nindent 4 }}
-  annotations:
-    {{- include "cray-etcd-base.common-annotations" . | nindent 4 }}
+  name: bitnami-etcd-snapshotter
+  namespace: services
 spec:
-  host: "{{ include "cray-etcd-base.name" . }}-etcd-client"
-  trafficPolicy:
-    tls:
-      mode: DISABLE
----
-apiVersion: "networking.istio.io/v1alpha3"
-kind: "DestinationRule"
-metadata:
-  name: "{{ include "cray-etcd-base.name" . }}-etcd-rule"
-  labels:
-    app.kubernetes.io/name: {{ include "cray-etcd-base.name" . }}-etcd
-    {{- include "cray-etcd-base.common-labels" . | nindent 4 }}
-  annotations:
-    {{- include "cray-etcd-base.common-annotations" . | nindent 4 }}
-spec:
-  host: "{{ include "cray-etcd-base.name" . }}-etcd"
-  trafficPolicy:
-    tls:
-      mode: DISABLE
-{{- end }}
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.volumeSize }}
+  storageClassName: ceph-cephfs-external
+  volumeMode: Filesystem

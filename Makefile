@@ -2,11 +2,11 @@
 
 CHART_METADATA_IMAGE ?= artifactory.algol60.net/csm-docker/stable/chart-metadata
 YQ_IMAGE ?= artifactory.algol60.net/docker.io/mikefarah/yq:4
-HELM_IMAGE ?= artifactory.algol60.net/docker.io/alpine/helm:3.7.1
-HELM_UNITTEST_IMAGE ?= artifactory.algol60.net/docker.io/quintush/helm-unittest
-HELM_DOCS_IMAGE ?= artifactory.algol60.net/docker.io/jnorwood/helm-docs:v1.5.0
+HELM_IMAGE ?= artifactory.algol60.net/csm-docker/stable/docker.io/alpine/helm:3.9.4
+HELM_UNITTEST_IMAGE ?= artifactory.algol60.net/csm-docker/stable/docker.io/quintush/helm-unittest:latest
+HELM_DOCS_IMAGE ?= artifactory.algol60.net/csm-docker/stable/docker.io/jnorwood/helm-docs:v1.5.0
 
-all: lint dep-up test package
+all: dep-up lint test package
 
 helm:
 	docker run --rm \
@@ -20,28 +20,33 @@ helm:
 		$(CMD)
 
 lint:
-	CMD="lint charts/cray-etcd-backup"   $(MAKE) helm
-	CMD="lint charts/cray-etcd-defrag"   $(MAKE) helm
-	CMD="lint charts/cray-etcd-base"     $(MAKE) helm
+	CMD="lint charts/cray-etcd-backup"          $(MAKE) helm
+	CMD="lint charts/cray-etcd-defrag"          $(MAKE) helm
+	CMD="lint charts/cray-etcd-base"            $(MAKE) helm
+	CMD="lint charts/cray-etcd-migration-setup" $(MAKE) helm
 
 dep-up:
-	CMD="dep up charts/cray-etcd-backup"   $(MAKE) helm
-	CMD="dep up charts/cray-etcd-defrag"   $(MAKE) helm
-	CMD="dep up charts/cray-etcd-base"     $(MAKE) helm
+	CMD="dep up charts/cray-etcd-backup"          $(MAKE) helm
+	CMD="dep up charts/cray-etcd-defrag"          $(MAKE) helm
+	CMD="dep up charts/cray-etcd-base"            $(MAKE) helm
+	CMD="dep up charts/cray-etcd-migration-setup" $(MAKE) helm
 
 test:
 	docker run --rm \
+		--user $(shell id -u):$(shell id -g) \
 		-v ${PWD}/charts:/apps \
-		${HELM_UNITTEST_IMAGE} -3 \
+		${HELM_UNITTEST_IMAGE} \
 		cray-etcd-backup \
 		cray-etcd-defrag \
-		cray-etcd-base
+		cray-etcd-base \
+		cray-etcd-migration-setup
 
 package:
 ifdef CHART_VERSIONS
-	CMD="package charts/cray-etcd-backup   --version $(word 1, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-defrag   --version $(word 2, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-base --version $(word 3, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-backup          --version $(word 1, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-defrag          --version $(word 2, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-base            --version $(word 3, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-migration-setup --version $(word 4, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
 else
 	CMD="package charts/* -d packages" $(MAKE) helm
 endif
@@ -56,9 +61,10 @@ annotated-images:
 	| docker run --rm -i $(YQ_IMAGE) e -N '.. | .image? | select(.)' -
 
 images:
-	{ CHART=charts/cray-etcd-backup   $(MAKE) -s extracted-images annotated-images; \
-	  CHART=charts/cray-etcd-defrag   $(MAKE) -s extracted-images annotated-images; \
-	  CHART=charts/cray-etcd-base     $(MAKE) -s extracted-images annotated-images; \
+	{ CHART=charts/cray-etcd-backup          $(MAKE) -s extracted-images annotated-images; \
+	  CHART=charts/cray-etcd-defrag          $(MAKE) -s extracted-images annotated-images; \
+	  CHART=charts/cray-etcd-base            $(MAKE) -s extracted-images annotated-images; \
+	  CHART=charts/cray-etcd-migration-setup $(MAKE) -s extracted-images annotated-images; \
 	} | sort -u
 
 snyk:

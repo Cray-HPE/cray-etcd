@@ -1,7 +1,7 @@
 {{/*
 MIT License
 
-(C) Copyright 2022 Hewlett Packard Enterprise Development LP
+(C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ spec:
           {{- end }}
           env:
             - name: ETCD_HOST
-              value: "{{ include "cray-etcd-base.fullname" . }}-etcd.{{ .Release.Namespace }}.svc"
+              value: "{{ include "cray-etcd-base.fullname" . }}-bitnami-etcd.{{ .Release.Namespace }}.svc"
             - name: ETCD_PORT
               value: "2379"
             - name: ETCD_NUM_REPLICAS
