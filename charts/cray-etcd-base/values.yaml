@@ -73,9 +73,9 @@ etcd:
   annotations: {}
   nodeSelector: {}
   affinity: {}
-  podAffinityPreset:
+  podAffinityPreset: ""
   podAntiAffinityPreset: hard
-  nodeAffinityPreset:
+  nodeAffinityPreset: {}
   resources: {}
   persistence:
     enabled: true
