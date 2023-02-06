@@ -46,3 +46,24 @@ Create actual chart name and version as used by the chart label.
 {{- printf "%s-%s" (.Values.global.chart.name | default "unknown-chart-name") (.Values.global.chart.version | default "unknown-chart-version") | replace "+" "_" | trunc 63 | trimSuffix "-" | trimSuffix "_" | trimSuffix "." -}}
 {{- end -}}
 
+{{/*
+Return the proper etcd peer protocol
+*/}}
+{{- define "cray-etcd-base.peerProtocol" -}}
+{{- if .Values.etcd.auth.peer.secureTransport -}}
+{{- print "https" -}}
+{{- else -}}
+{{- print "http" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the proper etcd client protocol
+*/}}
+{{- define "cray-etcd-base.clientProtocol" -}}
+{{- if .Values.etcd.auth.client.secureTransport -}}
+{{- print "https" -}}
+{{- else -}}
+{{- print "http" -}}
+{{- end -}}
+{{- end -}}

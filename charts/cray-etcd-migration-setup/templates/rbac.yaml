@@ -1,7 +1,7 @@
-{{/*
+{{- /*
 MIT License
 
-(C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
+(C) Copyright 2023 Hewlett Packard Enterprise Development LP
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -21,35 +21,52 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 */}}
-{{- if .Values.etcd.enabled -}}
----
-apiVersion: "networking.istio.io/v1alpha3"
-kind: "DestinationRule"
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: "{{ include "cray-etcd-base.name" . }}-etcd-client-rule"
-  labels:
-    app.kubernetes.io/name: {{ include "cray-etcd-base.name" . }}-etcd
-    {{- include "cray-etcd-base.common-labels" . | nindent 4 }}
-  annotations:
-    {{- include "cray-etcd-base.common-annotations" . | nindent 4 }}
-spec:
-  host: "{{ include "cray-etcd-base.name" . }}-etcd-client"
-  trafficPolicy:
-    tls:
-      mode: DISABLE
+  name: "cray-etcd-migration"
 ---
-apiVersion: "networking.istio.io/v1alpha3"
-kind: "DestinationRule"
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
-  name: "{{ include "cray-etcd-base.name" . }}-etcd-rule"
-  labels:
-    app.kubernetes.io/name: {{ include "cray-etcd-base.name" . }}-etcd
-    {{- include "cray-etcd-base.common-labels" . | nindent 4 }}
-  annotations:
-    {{- include "cray-etcd-base.common-annotations" . | nindent 4 }}
-spec:
-  host: "{{ include "cray-etcd-base.name" . }}-etcd"
-  trafficPolicy:
-    tls:
-      mode: DISABLE
-{{- end }}
+  name: cray-etcd-migration-role
+rules:
+- apiGroups:
+  - ""
+  - "apps"
+  resources:
+  - pods
+  - pods/exec
+  - endpoints
+  - statefulsets
+  - statefulsets/scale
+  - secrets
+  - persistentvolumeclaims
+  - etcdbackups
+  verbs:
+  - "get"
+  - "list"
+  - "create"
+  - "patch"
+  - "delete"
+  - "watch"
+- apiGroups:
+  - "etcd.database.coreos.com"
+  resources:
+  - etcdbackups
+  verbs:
+  - "get"
+  - "delete"
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cray-etcd-migration-role-binding
+subjects:
+- kind: ServiceAccount
+  name: cray-etcd-migration
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cray-etcd-migration-role

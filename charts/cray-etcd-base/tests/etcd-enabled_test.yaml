@@ -165,7 +165,6 @@ tests:
     set:
       etcd.enabled: true
     asserts:
-    asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
           path: spec.template.spec.containers[0].env[25].name
@@ -289,6 +288,7 @@ tests:
       etcd.auth.client.secureTransport: true
       etcd.auth.client.useAutoTLS: true
       etcd.auth.client.existingSecret: "foo"
+      etcd.auth.client.enableAuthentication: true
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
@@ -337,15 +337,11 @@ tests:
   - it: should create TLS certificate requests for server cert when TLS is enabled
     set:
       etcd.enabled: true
-      etcd.auth.client:
-        secureTransport: true
-        existingSecret: "foo"
+      etcd.auth.client.secureTransport: true
+      etcd.auth.client.useAutoTLS: true
+      etcd.auth.client.existingSecret: "foo"
+      etcd.auth.client.enableAuthentication: true
     asserts:
-      - template: certificates.yaml
-        documentIndex: 0
-        equal:
-          path: spec.commonName
-          value: RELEASE-NAME-cray-etcd-base-NAMESPACE-server
       - template: certificates.yaml
         documentIndex: 0
         equal:
@@ -361,6 +357,11 @@ tests:
         equal:
           path: spec.issuerRef.name
           value: cert-manager-issuer-common
+      - template: certificates.yaml
+        documentIndex: 0
+        equal:
+          path: spec.commonName
+          value: RELEASE-NAME-cray-etcd-base-NAMESPACE-server
       - template: certificates.yaml
         documentIndex: 1
         equal:
@@ -383,7 +384,3 @@ tests:
         equal:
           path: spec.commonName
           value: RELEASE-NAME-cray-etcd-base-NAMESPACE-client
-      - template: certificates.yaml
-        documentIndex: 2
-        equal:
-          path: spec.dnsNames

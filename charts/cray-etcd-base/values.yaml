@@ -39,17 +39,67 @@ fullnameOverride: ""  # use this if you want to provide a more-complete name for
 # https://github.com/bitnami/charts/tree/main/bitnami/etcd#parameters
 #
 etcd:
+  extraVolumeMounts:
+  - mountPath: /csm
+    name: etcd-config
+  volumePermissions:
+    enabled: true
+    image:
+      registry: artifactory.algol60.net
+      repository: csm-docker/stable/docker.io/bitnami/bitnami-shell
+      tag: 11-debian-11-r79
+      digest: ""
+      pullPolicy: IfNotPresent
+  containerPorts:
+    client: 2379
+    peer: 2380
+  command:
+    - "sh"
+    - "-c"
+    - "cp /csm/etcd.conf.yml /opt/bitnami/etcd/conf/etcd.yaml; sed -i s/POD_NAME/${MY_POD_NAME}/ /opt/bitnami/etcd/conf/etcd.yaml; /opt/bitnami/scripts/etcd/entrypoint.sh /opt/bitnami/scripts/etcd/run.sh"
+
   enabled: true
+  clusterDomain: cluster.local
   image:
     registry: artifactory.algol60.net
     repository: csm-docker/stable/docker.io/bitnami/etcd
-    tag: 3.5.6-debian-11-r0
+    tag: 3.5.7-debian-11-r4
+    debug: false
   pullPolicy: IfNotPresent
   fullnameOverride: ""
   nameOverride: ""
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 20
+    periodSeconds: 5
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 10
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 20
+    periodSeconds: 5
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 10
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 20
   auth:
     rbac:
       create: false
+    peer:
+      secureTransport: false
+      useAutoTLS: false
+      existingSecret: ""
+      enableAuthentication: false
+      certFilename: cert.pem
+      certKeyFilename: key.pem
+      caFilename: ""
     client:
       secureTransport: false
       useAutoTLS: false
@@ -100,7 +150,7 @@ etcd:
       nodeSelector: {}
       tolerations: []
     pvc:
-      existingClaim: ""
+      existingClaim: bitnami-etcd-snapshotter
       size: 2Gi
       storageClassName: ceph-cephfs-external
   extraEnvVars:
@@ -114,3 +164,9 @@ etcd:
       value: "10737418240"
     - name: ETCD_SNAPSHOT_COUNT
       value: "10000"
+
+util:
+  image:
+    repository: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3
+    tag: kubectl_v1_21_12_1.0.0.43797
+    pullPolicy: IfNotPresent
