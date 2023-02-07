@@ -29,7 +29,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
   annotations:
-    helm.sh/hook: pre-upgrade
+    helm.sh/hook: pre-upgrade, pre-install
     helm.sh/hook-delete-policy: before-hook-creation
 spec:
   ttlSecondsAfterFinished: 86400
@@ -43,17 +43,31 @@ spec:
     spec:
       restartPolicy: Never
       serviceAccountName: cray-etcd-migration
+      volumes:
+      - name: snapshot-volume
+        persistentVolumeClaim:
+          claimName: bitnami-etcd-snapshotter
       containers:
         - name: pre-upgrade-etcd-backup
           image: {{ .Values.util.image.repository }}:{{ .Values.util.image.tag }}
           imagePullPolicy: {{ .Values.util.image.pullPolicy }}
+          volumeMounts:
+          - name: snapshot-volume
+            mountPath: /snapshots
           command:
             - '/bin/sh'
           args:
             - "-c"
             - |
+               snapshot_dir="/snapshots/{{ include "cray-etcd-base.fullname" . }}-bitnami-etcd"
+               snapshot_file="{{ include "cray-etcd-base.fullname" . }}_etcd_migration.snapshot.db"
+               echo "Creating $snapshot_dir directory for snapshots..."
+               mkdir -p $snapshot_dir
+               echo "Changing ownership of $snapshot_dir to etcd user"
+               chown -R 1001:1001 $snapshot_dir
                ns={{ .Release.Namespace }}
                cluster="{{ include "cray-etcd-base.fullname" . }}"
+
                kubectl get etcdbackup ${cluster}-etcd-cluster-periodic-backup -n ${ns} > /dev/null 2>&1
                bu_rc=$?
                kubectl get endpoints ${cluster}-etcd-client -n ${ns} -o json > /dev/null 2>&1
@@ -73,9 +87,8 @@ spec:
                def main():
                    s3 = boto3.resource('s3', endpoint_url=sys.argv[1])
                    bucket = s3.Bucket('etcd-backup')
-                   file_name = '/tmp/etcd_bitnami_migration.snapshot.db'
-                   cluster="{{ include "cray-etcd-base.fullname" . }}"
-                   key_name="%s/etcd_bitnami_migration.snapshot.db" % (cluster)
+                   file_name="/tmp/%s" % (sys.argv[2])
+                   key_name="{{ include "cray-etcd-base.fullname" . }}/%s" % (sys.argv[2])
                    bucket.upload_file(Filename=file_name, Key=key_name)
 
                if __name__ == '__main__':
@@ -84,14 +97,13 @@ spec:
                chmod 755 /tmp/upload-snapshot.py
 
                pods=$(kubectl get endpoints ${cluster}-etcd-client -n ${ns} -o json | jq -r .subsets[].addresses[].targetRef.name)
-               file_name=etcd_bitnami_migration.snapshot.db
                for pod in $pods
                do
                  echo "Taking snapshot from ${pod}..."
                  kubectl exec -i -n ${ns} ${pod} -c etcd -- /bin/sh -c 'ETCDCTL_API=3 etcdctl snapshot save snapshot.db'
                  if [ $? -eq 0 ]; then
-                   echo "Copying snapshot from ${pod} to /tmp/${file_name}..."
-                   kubectl -n ${ns} -c etcd cp $pod:snapshot.db /tmp/$file_name
+                   echo "Copying snapshot from ${pod} to /tmp/${snapshot_file}..."
+                   kubectl -n ${ns} -c etcd cp $pod:snapshot.db /tmp/${snapshot_file}
                    if [ $? -eq 0 ]; then
                      break
                    fi
@@ -115,8 +127,8 @@ spec:
                region=foo
                EOF
 
-               echo "Uploading snapshot ${cluster}/etcd_bitnami_migration.snapshot.db to ${http_s3_endpoint}..."
-               /tmp/upload-snapshot.py ${http_s3_endpoint}
+               echo "Uploading snapshot ${snapshot_file} to ${http_s3_endpoint}..."
+               /tmp/upload-snapshot.py ${http_s3_endpoint} ${snapshot_file}
                echo "Done!"
 ---
 apiVersion: batch/v1
@@ -158,14 +170,16 @@ spec:
             - '-c'
             - |
                ns={{ .Release.Namespace }}
+               snapshot_dir="/snapshots/{{ include "cray-etcd-base.fullname" . }}-bitnami-etcd"
+               snapshot_file="{{ include "cray-etcd-base.fullname" . }}_etcd_migration.snapshot.db"
                cluster="{{ include "cray-etcd-base.fullname" . }}"
                kubectl get etcdbackup ${cluster}-etcd-cluster-periodic-backup -n ${ns} > /dev/null 2>&1
                if [ $? -ne 0 ]; then
                   kubectl rollout status statefulset -n "${ns}" "${cluster}-bitnami-etcd"
                   echo "Taking initial snapshot of cluster..."
-                  kubectl exec -i -n ${ns} "${cluster}-bitnami-etcd-0" -c etcd -- /bin/sh -c '/opt/bitnami/scripts/etcd/snapshot.sh'
+                  kubectl exec -i -n ${ns} "${cluster}-bitnami-etcd-0" -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=$snapshot_dir /opt/bitnami/scripts/etcd/snapshot.sh"
                   echo "Editing etcd statefulset to existing (instead of new cluster)..."
-                  kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_INITIAL_CLUSTER_STATE=existing
+                  kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_INITIAL_CLUSTER_STATE=existing ETCD_SNAPSHOTS_DIR=$snapshot_dir
                   echo "${cluster}-etcd-cluster-periodic-backup not found, not restoring from previous cluster backup..."
                   exit 0
                fi
@@ -188,9 +202,8 @@ spec:
                    s3_config = Config(connect_timeout=S3_CONNECT_TIMEOUT, read_timeout=S3_READ_TIMEOUT)
                    s3 = boto3.resource('s3', endpoint_url=sys.argv[1], config=s3_config)
                    bucket = s3.Bucket('etcd-backup')
-                   file_name='/snapshots/etcd_bitnami_migration.snapshot.db'
-                   cluster="{{ include "cray-etcd-base.fullname" . }}"
-                   key_name="%s/etcd_bitnami_migration.snapshot.db" % (cluster)
+                   key_name="{{ include "cray-etcd-base.fullname" . }}/%s" % (sys.argv[3])
+                   file_name="/%s/%s" % (sys.argv[2], sys.argv[3])
                    bucket.download_file(Filename=file_name, Key=key_name)
                
                if __name__ == '__main__':
@@ -215,17 +228,18 @@ spec:
                region=foo
                EOF
 
-               echo "Download snapshot ${cluster}/etcd_bitnami_migration.snapshot.db from ${http_s3_endpoint}..."
-               /tmp/download-snapshot.py $http_s3_endpoint
+               echo "Download snapshot ${snapshot_file} from ${http_s3_endpoint}..."
+               /tmp/download-snapshot.py ${http_s3_endpoint} ${snapshot_dir} ${snapshot_file}
+               chown 1001:1001 ${snapshot_dir}/${snapshot_file}
 
-               echo "Contents of /snapshots:"
-               ls -l /snapshots
+               echo "Contents of $snapshot_dir:"
+               ls -l $snapshot_dir
 
                echo "Scaling etcd statefulset down to zero..."
                kubectl scale statefulset -n "${ns}" "${cluster}-bitnami-etcd" --replicas=0
                kubectl rollout status statefulset -n "${ns}" "${cluster}-bitnami-etcd"
 
-               kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_START_FROM_SNAPSHOT=yes ETCD_INIT_SNAPSHOT_FILENAME=etcd_bitnami_migration.snapshot.db ETCD_INIT_SNAPSHOTS_DIR=/snapshots ETCD_INITIAL_CLUSTER_STATE=new 
+               kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_START_FROM_SNAPSHOT=yes ETCD_INIT_SNAPSHOT_FILENAME=$snapshot_file ETCD_INIT_SNAPSHOTS_DIR=$snapshot_dir
 
                pvc="data-${cluster}-bitnami-etcd"
                echo "Deleting existing PVC's..."
@@ -243,11 +257,11 @@ spec:
                echo "Deleting etcdbackup CRD from previous etcd deployment..."
                kubectl delete etcdbackup ${cluster}-etcd-cluster-periodic-backup -n ${ns}
 
-               echo "Taking initial snapshot of cluster..."
-               kubectl exec -i -n ${ns} "${cluster}-bitnami-etcd-0" -c etcd -- /bin/sh -c '/opt/bitnami/scripts/etcd/snapshot.sh'
+               echo "Taking initial snapshot of cluster to $snapshot_dir..."
+               kubectl exec -i -n ${ns} "${cluster}-bitnami-etcd-0" -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=$snapshot_dir /opt/bitnami/scripts/etcd/snapshot.sh"
 
                echo "Editing etcd statefulset to no longer start from snapshot..."
 
-               kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_START_FROM_SNAPSHOT=no ETCD_INITIAL_CLUSTER_STATE=existing
+               kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_START_FROM_SNAPSHOT=no ETCD_INITIAL_CLUSTER_STATE=existing ETCD_SNAPSHOTS_DIR=$snapshot_dir
 
                echo "Done!"

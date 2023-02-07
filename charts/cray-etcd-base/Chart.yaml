@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 #
 apiVersion: v2
 name: cray-etcd-base
-version: 1.0.2
+version: 1.0.3
 description: This chart should never be installed directly, instead it is intended to be a sub-chart.
 home: https://github.com/Cray-HPE/cray-etcd
 dependencies:
@@ -35,7 +35,9 @@ maintainers:
 annotations:
   artifacthub.io/images: |
     - name: etcd
-      image: artifactory.algol60.net/csm-docker/stable/docker.io/bitnami/etcd:3.5.7-debian-11-r0
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/bitnami/etcd:3.5.7-debian-11-r0-patch
     - name: bitnami-shell
       image: artifactory.algol60.net/csm-docker/stable/docker.io/bitnami/bitnami-shell:11-debian-11-r79
+    - name: util
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3:kubectl_v1_21_12_1.0.0.43797
   artifacthub.io/license: MIT
