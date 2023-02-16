@@ -32,7 +32,8 @@ data:
     {{- $replicaCount := int .Values.etcd.replicaCount }}
     {{- $peerPort := int .Values.etcd.containerPorts.peer }}
     {{- $clientPort := int .Values.etcd.containerPorts.client }}
-    {{- $etcdFullname := include "common.names.fullname" . }}
+    {{- $etcdPartialname := include "cray-etcd-base.fullname" . }}
+    {{- $etcdFullname := (printf "%s%s" $etcdPartialname "-bitnami-etcd") }}
     {{- $releaseNamespace := .Release.Namespace }}
     {{- $etcdHeadlessServiceName := (printf "%s-%s" $etcdFullname "headless" | trunc 63 | trimSuffix "-") }}
     {{- $clusterDomain := .Values.etcd.clusterDomain }}
@@ -44,9 +45,8 @@ data:
     {{- end }}
     name: POD_NAME
     initial-cluster: {{ join "," $initialCluster | quote }}
-    initial-advertise-peer-urls: {{ printf "%s://%s.%s.%s.svc.%s:%d" $etcdPeerProtocol $etcdFullname $etcdHeadlessServiceName $releaseNamespace $clusterDomain $peerPort }}
+    initial-advertise-peer-urls: {{ printf "%s://POD_NAME.%s.%s.svc.%s:%d" $etcdPeerProtocol $etcdHeadlessServiceName $releaseNamespace $clusterDomain $peerPort }}
     listen-peer-urls: http://0.0.0.0:{{ $peerPort }}
-    advertise-client-urls: {{ printf "%s://%s.%s.%s.svc.%s:%d" $etcdPeerProtocol $etcdFullname $etcdHeadlessServiceName $releaseNamespace $clusterDomain $clientPort }}
+    advertise-client-urls: {{ printf "%s://POD_NAME.%s.%s.svc.%s:%d" $etcdPeerProtocol $etcdHeadlessServiceName $releaseNamespace $clusterDomain $clientPort }}
     listen-client-urls: http://0.0.0.0:{{ $clientPort }}
     data-dir: /bitnami/etcd/data
-
