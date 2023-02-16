@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: etcd-backup-restore
-  namespace: operators
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.replicas }}
   strategy:
@@ -32,48 +32,24 @@ spec:
                 operator: In
                 values: ["{{ include "cray-etcd-backup.fullname" . }}"]
             topologyKey: kubernetes.io/hostname
-      initContainers:
-        - name: init
-          image: {{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}
-          imagePullPolicy: {{ .Values.kubectl.image.pullPolicy }}
-          command:
-            - /bin/sh
-            - -c
-            - create_aws_creds.sh
-          volumeMounts:
-            - name: etcd-backup-restore-config
-              mountPath: /usr/local/sbin
       containers:
         - name: util
-          image: {{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}
-          imagePullPolicy: {{ .Values.kubectl.image.pullPolicy }}
+          image: {{ .Values.util.image.repository }}:{{ .Values.util.image.tag }}
+          imagePullPolicy: {{ .Values.util.image.pullPolicy }}
           command:
             - /bin/sh
             - -c
-            - "while true; do sleep 1000; done"
+            - "create_aws_creds.sh && while true; do sleep 1000; done"
           volumeMounts:
             - name: etcd-backup-restore-config
               mountPath: /usr/local/sbin
-            - name: etcd-backup-restore-aws-config
-              mountPath: /conf
-        - name: boto3
-          image: {{ .Values.boto3.image.repository }}:{{ .Values.boto3.image.tag }}
-          imagePullPolicy: {{ .Values.boto3.image.pullPolicy }}
-          command:
-            - /bin/sh
-            - -c
-            - "while true; do sleep 1000; done"
-          volumeMounts:
-            - name: etcd-backup-restore-config
-              mountPath: /usr/local/sbin
-            - name: etcd-backup-restore-aws-config
-              mountPath: /conf
+            - name: snapshot-volume
+              mountPath: /snapshots
       volumes:
         - name: etcd-backup-restore-config
           configMap:
             name: etcd-backup-restore-config
             defaultMode: 0755
-        - name: etcd-backup-restore-aws-config
-          secret:
-            secretName: etcd-backup-restore-aws-config
-            optional: true
+        - name: snapshot-volume
+          persistentVolumeClaim:
+            claimName: bitnami-etcd-snapshotter

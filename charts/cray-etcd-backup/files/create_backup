@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -23,70 +23,27 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-project=$1
+cluster=$1
 backup_name=$2
-s3_endpoint=$(cat /conf/s3_endpoint)
+s3_endpoint=$(cat /${HOME}/.aws/s3_endpoint)
+ns=$(kubectl get statefulsets.apps -A | grep ${cluster}-bitnami-etcd | awk '{print $1}')
+new_snapshot=""
 
 if test "$#" -ne 2; then
     echo "Usage: create_backup <project_name> <backup_name>"
     exit 1
 fi
 
-random_num=$RANDOM
-file=/tmp/$project-backup-$random_num.yaml
-line=$(grep $project /usr/local/sbin/clusters.txt)
-namespace=$(echo $line | awk 'BEGIN { FS = "." } ; {print $2}')
-tls_secret=$(echo $line | awk 'BEGIN { FS = "." } ; {print $5}')
-ip=$(kubectl get service -n $namespace $project-etcd-client -ojsonpath='{.spec.clusterIP}' 2>&1)
-rc=$?
+pods=$(kubectl get endpoints ${cluster}-bitnami-etcd -n ${ns} -o jsonpath='{.subsets[*].addresses[*].targetRef.name}')
+for pod in $pods
+do
+  echo "Taking snapshot from ${pod}..."
+  output=$(kubectl exec -i -n ${ns} ${pod} -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=$snapshot_dir /opt/bitnami/scripts/etcd/snapshot.sh" 2>/dev/null)
+  if [ $? -eq 0 ]; then
+     new_snapshot=$(echo "$output" | grep "Snapshot saved at" | awk '{print $NF}')
+     break
+  fi
+done
 
-if [ $rc -ne 0 ]; then
-    echo "ERROR: Failed to get etcd cluster IP"
-    exit 1
-fi
-
-if [[ -n "$tls_secret" ]]; then
-
-cat > $file <<EOF
-apiVersion: "etcd.database.coreos.com/v1beta2"
-kind: "EtcdBackup"
-metadata:
-  name: $project-etcd-cluster-manual-backup-$random_num
-  namespace: $namespace
-spec:
-  etcdEndpoints: [https://$ip:2379]
-  storageType: S3
-  clientTLSSecret: $tls_secret
-  allowSelfSignedCertificates: true
-  s3:
-    path: etcd-backup/$project/$backup_name
-    awsSecret: etcd-backup-restore-aws-config
-    forcePathStyle: true
-    endpoint: $s3_endpoint
-  backupPolicy:
-    timeoutInSecond: 600
-EOF
-
-else
-
-cat > $file <<EOF
-apiVersion: "etcd.database.coreos.com/v1beta2"
-kind: "EtcdBackup"
-metadata:
-  name: $project-etcd-cluster-manual-backup-$random_num
-  namespace: $namespace
-spec:
-  etcdEndpoints: [http://$ip:2379]
-  storageType: S3
-  s3:
-    path: etcd-backup/$project/$backup_name
-    awsSecret: etcd-backup-restore-aws-config
-    forcePathStyle: true
-    endpoint: $s3_endpoint
-  backupPolicy:
-    timeoutInSecond: 600
-EOF
-
-fi
-
-kubectl -n $namespace apply -f $file
+echo "Pushing newly created snapshot ${new_snapshot} to S3 as ${backup_name} for ${cluster}"
+aws s3 cp --endpoint-url ${s3_endpoint} ${new_snapshot} s3://etcd-backup/${cluster}/${backup_name}

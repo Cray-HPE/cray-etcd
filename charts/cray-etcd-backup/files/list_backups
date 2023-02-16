@@ -1,12 +1,35 @@
 #!/usr/bin/env python3
+#
+# MIT License
+#
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
 
 import boto3
 import os
 from argparse import ArgumentParser
 
-os.environ["AWS_SHARED_CREDENTIALS_FILE"] = '/conf/credentials'
 backup_bucket = 'etcd-backup'
-s3_endpoint = open('/conf/s3_endpoint').read().replace('\n', '')
+home_dir = os.getenv('HOME')
+s3_endpoint = open('%s/.aws/s3_endpoint' % home_dir).read().replace('\n', '')
 
 def main():
     parser = ArgumentParser(description='Lists backups for a given project')
@@ -15,12 +38,15 @@ def main():
     s3 = boto3.client('s3', endpoint_url=s3_endpoint)
 
     response = s3.list_objects_v2(Bucket=backup_bucket)
-    if 'Contents' in response:
-        for item in response['Contents']:
-            if args.project in item['Key']:
-                print(item['Key'])
-    else:
-        print("No backups available yet.")
+    found_one=False
+    sorted_contents = sorted(response['Contents'], key=lambda d: d['LastModified'])
+    for item in sorted_contents:
+        if args.project in item['Key']:
+            print(item['Key'])
+            found_one=True
+
+    if not found_one:
+        print("No backups found for %s." % args.project)
 
 if __name__ == '__main__':
     main()
