@@ -173,6 +173,12 @@ spec:
                snapshot_dir="/snapshots/{{ include "cray-etcd-base.fullname" . }}-bitnami-etcd"
                snapshot_file="{{ include "cray-etcd-base.fullname" . }}_etcd_migration.snapshot.db"
                cluster="{{ include "cray-etcd-base.fullname" . }}"
+
+               echo "Patching snapshotter cronjob to remove labels to allow scheduling alongside etcd pods.."
+               kubectl -n ${ns} patch cronjob ${cluster}-bitnami-etcd-snapshotter --type json -p='[{"op": "remove", "path": "/spec/jobTemplate/spec/template/metadata/labels/app.kubernetes.io~1instance"}]'
+
+               kubectl -n ${ns} patch cronjob ${cluster}-bitnami-etcd-snapshotter --type json -p='[{"op": "remove", "path": "/spec/jobTemplate/spec/template/metadata/labels/app.kubernetes.io~1name"}]'
+
                kubectl get etcdbackup ${cluster}-etcd-cluster-periodic-backup -n ${ns} > /dev/null 2>&1
                if [ $? -ne 0 ]; then
                   kubectl rollout status statefulset -n "${ns}" "${cluster}-bitnami-etcd"
