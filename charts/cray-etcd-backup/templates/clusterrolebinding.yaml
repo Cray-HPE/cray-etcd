@@ -6,7 +6,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: etcd-backup-restore
-    namespace: operators
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: etcd-backup-restore

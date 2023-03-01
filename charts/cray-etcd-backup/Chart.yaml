@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 #
 apiVersion: v2
 name: cray-etcd-backup
-version: 0.4.3
+version: 0.5.0
 description: Configures etcd cluster backups
 home: https://github.com/Cray-HPE/cray-etcd
 maintainers:
@@ -31,8 +31,6 @@ maintainers:
   - name: kimjensen-hpe
 annotations:
   artifacthub.io/images: |
-    - name: kubectl
-      image: artifactory.algol60.net/csm-docker/stable/docker-kubectl:1.19.15
-    - name: boto3
-      image: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3:1.0.0.24037
+    - name: util
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3:kubectl_v1_21_12_1.0.0.43797
   artifacthub.io/license: MIT

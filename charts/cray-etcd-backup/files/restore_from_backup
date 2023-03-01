@@ -1,36 +1,78 @@
 #!/bin/sh
-# Copyright 2020, Cray Inc. All Rights Reserved.
+#
+# MIT License
+#
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
 
-project=$1
-backup_name=$2
-s3_endpoint=$(cat /conf/s3_endpoint)
+cluster=$1
+snapshot=$2
+s3_endpoint=$(cat /${HOME}/.aws/s3_endpoint)
+ns=$(kubectl get statefulsets.apps -A | grep ${cluster}-bitnami-etcd | awk '{print $1}')
 
 if test "$#" -ne 2; then
     echo "Usage: restore_from_backup <project_name> <backup_name>"
     exit 1
 fi
 
-random_num=$RANDOM
-file=/tmp/$project-restore-$random_num.yaml
-line=$(grep $project /usr/local/sbin/clusters.txt)
-namespace=$(echo $line | awk 'BEGIN { FS = "." } ; {print $2}')
+#
+# Ensure the snapshot is on the cephfs PVC
+#
+if [ ! -f /snapshots/${cluster}-bitnami-etcd/${snapshot} ]; then
+  echo "Downloading ${snapshot} from S3 for ${cluster}"
+  aws s3 cp --endpoint-url ${s3_endpoint} s3://etcd-backup/${cluster}/${snapshot} /snapshots/${cluster}-bitnami-etcd/${snapshot}
+  if [[ $? -ne 0 ]]; then
+    echo "ERROR: Failed to download ${snapshot} from S3 for ${cluster}!"
+    exit 1
+  fi
+fi
 
-cat > $file <<EOF
-apiVersion: "etcd.database.coreos.com/v1beta2"
-kind: "EtcdRestore"
-metadata:
-  name: $project-etcd
-  namespace: $namespace
-spec:
-  etcdCluster:
-    name: $project-etcd
-    namespace: $namespace
-  backupStorageType: S3
-  s3:
-    path: etcd-backup/$project/$backup_name
-    awsSecret: etcd-backup-restore-aws-config
-    forcePathStyle: true
-    endpoint: $s3_endpoint
-EOF
+cnt=0
+while true; do
+  cnt=$((cnt+1))
+  if [ "$cnt" -ge 3 ]; then
+    echo "ERROR: Failed to restore from snapshot after ${cnt} attempts..."
+    exit 1
+  fi
 
-kubectl -n $namespace apply -f $file
+  echo "Scaling etcd statefulset down to zero..."
+  kubectl scale statefulset -n "${ns}" "${cluster}-bitnami-etcd" --replicas=0
+  kubectl rollout status statefulset -n "${ns}" "${cluster}-bitnami-etcd" --timeout 90s
+
+  kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_START_FROM_SNAPSHOT=yes ETCD_INIT_SNAPSHOT_FILENAME=${snapshot} ETCD_INIT_SNAPSHOTS_DIR=/snapshots/${cluster}-bitnami-etcd ETCD_INITIAL_CLUSTER_STATE=new
+
+  pvc="data-${cluster}-bitnami-etcd"
+  echo "Deleting existing PVC's..."
+  kubectl delete pvc -n "${ns}" "${pvc}-0" "${pvc}-1" "${pvc}-2"
+
+  echo "Scaling etcd statefulset back up to three members..."
+  kubectl scale statefulset -n "${ns}" "${cluster}-bitnami-etcd" --replicas=3
+  kubectl rollout status statefulset -n "${ns}" "${cluster}-bitnami-etcd" --timeout 3m
+
+  if [ $? -eq 0 ]; then
+    break
+  else
+    echo "Retrying snapshot restore..."
+    continue
+  fi
+done
+
+kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_START_FROM_SNAPSHOT=no ETCD_INITIAL_CLUSTER_STATE=existing

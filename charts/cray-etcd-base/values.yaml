@@ -63,7 +63,7 @@ etcd:
   image:
     registry: artifactory.algol60.net
     repository: csm-docker/stable/docker.io/bitnami/etcd
-    tag: 3.5.7-debian-11-r0-patch
+    tag: 3.5.7-debian-11-r10-patch
     debug: false
   pullPolicy: IfNotPresent
   fullnameOverride: ""
@@ -116,8 +116,7 @@ etcd:
   # if compactionMode == periodic, then compactionRetention is the time on which compaction should trigger. default (1 hour)
   # if compactionMode == revision, then compactionRetention is the number of revisions at when compaction will get trigger.
   removeMemberOnContainerTermination: false
-  podAnnotations:
-    backup.velero.io/backup-volumes: snapshot-volume
+  podAnnotations: {}
   replicaCount: 3
   labels: {}
   annotations: {}

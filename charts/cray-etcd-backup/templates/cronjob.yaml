@@ -2,8 +2,8 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: kube-etcd-periodic-backup-cron
-  namespace: operators
+  name: etcd-backup-pvc-snapshots-to-s3
+  namespace: {{ .Release.Namespace }}
 spec:
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
@@ -15,17 +15,22 @@ spec:
           restartPolicy: Never
           serviceAccountName: "etcd-backup-restore"
           containers:
-          - name: kube-etcd-periodic-backup-cron
-            image: {{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}
-            imagePullPolicy: {{ .Values.kubectl.image.pullPolicy }}
+          - name: sync
+            image: {{ .Values.util.image.repository }}:{{ .Values.util.image.tag }}
+            imagePullPolicy: {{ .Values.util.image.pullPolicy }}
             command:
               - /bin/sh
               - -c
-              - create_periodic_backups.sh
+              - create_aws_creds.sh && sync-snapshots-to-s3.sh {{ .Values.pruneDayBegin }} {{ .Values.pruneDayEnd }}
             volumeMounts:
               - name: etcd-backup-restore-config
                 mountPath: /usr/local/sbin
+              - name: snapshot-volume
+                mountPath: /snapshots
           volumes:
+            - name: snapshot-volume
+              persistentVolumeClaim:
+                claimName: bitnami-etcd-snapshotter
             - name: etcd-backup-restore-config
               configMap:
                 name: etcd-backup-restore-config
