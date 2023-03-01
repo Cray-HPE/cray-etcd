@@ -63,7 +63,7 @@ etcd:
   image:
     registry: artifactory.algol60.net
     repository: csm-docker/stable/docker.io/bitnami/etcd
-    tag: 3.5.7-debian-11-r10-patch
+    tag: 3.5.7-debian-11-r0-patch
     debug: false
   pullPolicy: IfNotPresent
   fullnameOverride: ""
@@ -178,5 +178,5 @@ etcd:
 util:
   image:
     repository: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3
-    tag: kubectl_v1_21_12_1.0.0.43797
+    tag: kubectl_v1_21_12_1.0.0.49259
     pullPolicy: IfNotPresent
