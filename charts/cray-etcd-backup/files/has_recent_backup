@@ -1,7 +1,8 @@
+#!/bin/sh
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,30 +22,22 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 #
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: etcd-backup-restore-config
-  namespace: {{ .Release.Namespace }}
-data:
-  sync-snapshots-to-s3.sh: |-
-    {{- .Files.Get "files/sync-snapshots-to-s3.sh" | nindent 4 }}
 
-  create_aws_creds.sh: |-
-    {{- .Files.Get "files/create_aws_creds.sh" | nindent 4 }}
+if test "$#" -ne 2; then
+    echo "Usage: has_recent_backup <project_name> <num_days_considered_recent>"
+    exit 1
+fi
 
-  list_backups: |-
-    {{- .Files.Get "files/list_backups" | nindent 4 }}
+cluster=$1
+days_considered_recent=$2
 
-  create_backup: |-
-    {{- .Files.Get "files/create_backup" | nindent 4 }}
+endpoint=$(cat ${HOME}/.aws/s3_endpoint)
+epoch_secs=$(echo "`date +%s` - (86400 * $days_considered_recent)" | bc)
+date_str=$(date -d @$epoch_secs +'%Y-%m-%dT%H:%m:%S')
 
-  rebuild_cluster: |-
-    {{- .Files.Get "files/rebuild_cluster" | nindent 4 }}
-
-  has_recent_backup: |-
-    {{- .Files.Get "files/has_recent_backup" | nindent 4 }}
-
-  restore_from_backup: |-
-    {{- .Files.Get "files/restore_from_backup" | nindent 4 }}
+backups=$(aws s3api list-objects-v2 --output text --endpoint-url ${endpoint}  --prefix ${cluster} --bucket "etcd-backup" --query "Contents[?LastModified>='$date_str'].{Key: Key, LastModified: LastModified }" | sort -k 2 | awk '{print $1}')
+if [ "$backups" != "None" ] && [ ! -z "$backups" ]; then
+ echo "Pass"
+else
+ echo "Fail"
+fi
