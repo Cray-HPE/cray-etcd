@@ -23,7 +23,7 @@
 #
 apiVersion: v2
 name: cray-etcd-backup
-version: 0.5.0
+version: 0.5.1
 description: Configures etcd cluster backups
 home: https://github.com/Cray-HPE/cray-etcd
 maintainers:
