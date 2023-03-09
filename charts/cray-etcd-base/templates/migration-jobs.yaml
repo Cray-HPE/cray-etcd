@@ -96,7 +96,7 @@ spec:
                EOF
                chmod 755 /tmp/upload-snapshot.py
 
-               pods=$(kubectl get endpoints ${cluster}-etcd-client -n ${ns} -o json | jq -r .subsets[].addresses[].targetRef.name)
+               pods=$(kubectl get endpoints ${cluster}-etcd-client -n ${ns} -o jsonpath='{.subsets[*].addresses[*].targetRef.name}')
                for pod in $pods
                do
                  echo "Taking snapshot from ${pod}..."
