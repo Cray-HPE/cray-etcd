@@ -46,5 +46,14 @@ data:
   has_recent_backup: |-
     {{- .Files.Get "files/has_recent_backup" | nindent 4 }}
 
+  clear_alarms: |-
+    {{- .Files.Get "files/clear_alarms" | nindent 4 }}
+
+  pvc_usage: |-
+    {{- .Files.Get "files/pvc_usage" | nindent 4 }}
+
+  endpoint_status: |-
+    {{- .Files.Get "files/endpoint_status" | nindent 4 }}
+
   restore_from_backup: |-
     {{- .Files.Get "files/restore_from_backup" | nindent 4 }}
