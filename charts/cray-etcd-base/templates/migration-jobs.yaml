@@ -68,15 +68,12 @@ spec:
                ns={{ .Release.Namespace }}
                cluster="{{ include "cray-etcd-base.fullname" . }}"
 
-               kubectl get etcdbackup ${cluster}-etcd-cluster-periodic-backup -n ${ns} > /dev/null 2>&1
-               bu_rc=$?
                kubectl get endpoints ${cluster}-etcd-client -n ${ns} -o json > /dev/null 2>&1
-               ep_rc=$?
-               if [[ $bu_rc -ne 0 || $ep_rc -ne 0 ]]; then
-                  echo "${cluster}-etcd-cluster-periodic-backup and ${cluster}-etcd-client not found, assuming upgrade to bitnami chart has been completed..."
+               if [[ $? -ne 0 ]]; then
+                  echo "${cluster}-etcd-client not found, assuming upgrade to bitnami chart has been completed..."
                   exit 0
                fi
-               echo "${cluster}-etcd-cluster-periodic-backup and ${cluster}-etcd-client found, proceeding with backup/restore..."
+               echo "${cluster}-etcd-client found, proceeding with migrating current data..."
 
                cat > /tmp/upload-snapshot.py <<EOF
                #!/usr/bin/env python3
@@ -179,18 +176,6 @@ spec:
 
                kubectl -n ${ns} patch cronjob ${cluster}-bitnami-etcd-snapshotter --type json -p='[{"op": "remove", "path": "/spec/jobTemplate/spec/template/metadata/labels/app.kubernetes.io~1name"}]'
 
-               kubectl get etcdbackup ${cluster}-etcd-cluster-periodic-backup -n ${ns} > /dev/null 2>&1
-               if [ $? -ne 0 ]; then
-                  kubectl rollout status statefulset -n "${ns}" "${cluster}-bitnami-etcd"
-                  echo "Taking initial snapshot of cluster..."
-                  kubectl exec -i -n ${ns} "${cluster}-bitnami-etcd-0" -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=$snapshot_dir /opt/bitnami/scripts/etcd/snapshot.sh"
-                  echo "Editing etcd statefulset to existing (instead of new cluster)..."
-                  kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_INITIAL_CLUSTER_STATE=existing ETCD_SNAPSHOTS_DIR=$snapshot_dir
-                  echo "${cluster}-etcd-cluster-periodic-backup not found, not restoring from previous cluster backup..."
-                  exit 0
-               fi
-               echo "${cluster}-etcd-cluster-periodic-backup found, proceeding with restore..."
-
                cat > /tmp/download-snapshot.py <<EOF
                #!/usr/bin/env python3
                
@@ -235,7 +220,19 @@ spec:
                EOF
 
                echo "Download snapshot ${snapshot_file} from ${http_s3_endpoint}..."
-               /tmp/download-snapshot.py ${http_s3_endpoint} ${snapshot_dir} ${snapshot_file}
+               /tmp/download-snapshot.py ${http_s3_endpoint} ${snapshot_dir} ${snapshot_file} 2>/dev/null
+
+               if [ $? -ne 0 ]; then
+                  echo "${snapshot_file} not found, proceeding without data migration..."
+                  kubectl rollout status statefulset -n "${ns}" "${cluster}-bitnami-etcd"
+                  echo "Taking initial snapshot of cluster..."
+                  kubectl exec -i -n ${ns} "${cluster}-bitnami-etcd-0" -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=$snapshot_dir /opt/bitnami/scripts/etcd/snapshot.sh"
+                  echo "Editing etcd statefulset to existing (instead of new cluster)..."
+                  kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_INITIAL_CLUSTER_STATE=existing ETCD_SNAPSHOTS_DIR=$snapshot_dir
+                  exit 0
+               fi
+
+               echo "${snapshot_file} found, proceeding with data migration..."
                chown 1001:1001 ${snapshot_dir}/${snapshot_file}
 
                echo "Contents of $snapshot_dir:"
@@ -260,8 +257,8 @@ spec:
                  exit 1
                fi
 
-               echo "Deleting etcdbackup CRD from previous etcd deployment..."
-               kubectl delete etcdbackup ${cluster}-etcd-cluster-periodic-backup -n ${ns}
+               echo "Deleting etcdbackup CRD from previous etcd deployment if present..."
+               kubectl delete etcdbackup ${cluster}-etcd-cluster-periodic-backup -n ${ns} 2>/dev/null
 
                echo "Taking initial snapshot of cluster to $snapshot_dir..."
                kubectl exec -i -n ${ns} "${cluster}-bitnami-etcd-0" -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=$snapshot_dir /opt/bitnami/scripts/etcd/snapshot.sh"

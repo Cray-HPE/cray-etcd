@@ -23,7 +23,7 @@
 #
 apiVersion: v2
 name: cray-etcd-base
-version: 1.0.6
+version: 1.0.7
 description: This chart should never be installed directly, instead it is intended to be a sub-chart.
 home: https://github.com/Cray-HPE/cray-etcd
 dependencies:
