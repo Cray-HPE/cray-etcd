@@ -55,5 +55,11 @@ data:
   endpoint_status: |-
     {{- .Files.Get "files/endpoint_status" | nindent 4 }}
 
+  endpoint_health: |-
+    {{- .Files.Get "files/endpoint_health" | nindent 4 }}
+
+  list_alarms: |-
+    {{- .Files.Get "files/list_alarms" | nindent 4 }}
+
   restore_from_backup: |-
     {{- .Files.Get "files/restore_from_backup" | nindent 4 }}
