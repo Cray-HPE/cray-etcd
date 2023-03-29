@@ -24,6 +24,8 @@
 #
 
 cluster=$1
+full_cluster_name="${cluster}-bitnami-etcd"
+snapshot_dir="/snapshots/${full_cluster_name}"
 backup_name=$2
 s3_endpoint=$(cat /${HOME}/.aws/s3_endpoint)
 ns=$(kubectl get statefulsets.apps -A | grep ${cluster}-bitnami-etcd | awk '{print $1}')
@@ -34,11 +36,11 @@ if test "$#" -ne 2; then
     exit 1
 fi
 
-pods=$(kubectl get endpoints ${cluster}-bitnami-etcd -n ${ns} -o jsonpath='{.subsets[*].addresses[*].targetRef.name}')
+pods=$(kubectl get endpoints ${full_cluster_name} -n ${ns} -o jsonpath='{.subsets[*].addresses[*].targetRef.name}')
 for pod in $pods
 do
   echo "Taking snapshot from ${pod}..."
-  output=$(kubectl exec -i -n ${ns} ${pod} -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=$snapshot_dir /opt/bitnami/scripts/etcd/snapshot.sh" 2>/dev/null)
+  output=$(kubectl exec -i -n ${ns} ${pod} -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=${snapshot_dir} /opt/bitnami/scripts/etcd/snapshot.sh" 2>/dev/null)
   if [ $? -eq 0 ]; then
      new_snapshot=$(echo "$output" | grep "Snapshot saved at" | awk '{print $NF}')
      break

@@ -60,7 +60,7 @@ spec:
             - "-c"
             - |
                snapshot_dir="/snapshots/{{ include "cray-etcd-base.fullname" . }}-bitnami-etcd"
-               snapshot_file="{{ include "cray-etcd-base.fullname" . }}_etcd_migration.snapshot.db"
+               snapshot_file="{{ include "cray-etcd-base.fullname" . }}_etcd_migration.snapshot-{{ .Release.Revision }}.db"
                echo "Creating $snapshot_dir directory for snapshots..."
                mkdir -p $snapshot_dir
                echo "Changing ownership of $snapshot_dir to etcd user"
@@ -168,13 +168,31 @@ spec:
             - |
                ns={{ .Release.Namespace }}
                snapshot_dir="/snapshots/{{ include "cray-etcd-base.fullname" . }}-bitnami-etcd"
-               snapshot_file="{{ include "cray-etcd-base.fullname" . }}_etcd_migration.snapshot.db"
+               snapshot_file="{{ include "cray-etcd-base.fullname" . }}_etcd_migration.snapshot-{{ .Release.Revision }}.db"
                cluster="{{ include "cray-etcd-base.fullname" . }}"
 
                echo "Patching snapshotter cronjob to remove labels to allow scheduling alongside etcd pods.."
                kubectl -n ${ns} patch cronjob ${cluster}-bitnami-etcd-snapshotter --type json -p='[{"op": "remove", "path": "/spec/jobTemplate/spec/template/metadata/labels/app.kubernetes.io~1instance"}]'
 
                kubectl -n ${ns} patch cronjob ${cluster}-bitnami-etcd-snapshotter --type json -p='[{"op": "remove", "path": "/spec/jobTemplate/spec/template/metadata/labels/app.kubernetes.io~1name"}]'
+
+               cat > /tmp/upload-snapshot.py <<EOF
+               #!/usr/bin/env python3
+
+               import boto3
+               import sys
+
+               def main():
+                   s3 = boto3.resource('s3', endpoint_url=sys.argv[1])
+                   bucket = s3.Bucket('etcd-backup')
+                   file_name="/snapshots/{{ include "cray-etcd-base.fullname" . }}-bitnami-etcd/%s" % (sys.argv[2])
+                   key_name="{{ include "cray-etcd-base.fullname" . }}/%s" % (sys.argv[2])
+                   bucket.upload_file(Filename=file_name, Key=key_name)
+
+               if __name__ == '__main__':
+                   main()
+               EOF
+               chmod 755 /tmp/upload-snapshot.py
 
                cat > /tmp/download-snapshot.py <<EOF
                #!/usr/bin/env python3
@@ -227,6 +245,9 @@ spec:
                   kubectl rollout status statefulset -n "${ns}" "${cluster}-bitnami-etcd"
                   echo "Taking initial snapshot of cluster..."
                   kubectl exec -i -n ${ns} "${cluster}-bitnami-etcd-0" -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=$snapshot_dir /opt/bitnami/scripts/etcd/snapshot.sh"
+                  snapshot_file=$(find ${snapshot_dir}/ -maxdepth 1 -type f -name 'db-*' | sort | tail -n 1 | sed 's/.*\///')
+                  echo "Uploading snapshot ${snapshot_file} to ${http_s3_endpoint}..."
+                  /tmp/upload-snapshot.py ${http_s3_endpoint} ${snapshot_file}
                   echo "Editing etcd statefulset to existing (instead of new cluster)..."
                   kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_INITIAL_CLUSTER_STATE=existing ETCD_SNAPSHOTS_DIR=$snapshot_dir
                   exit 0
@@ -262,6 +283,10 @@ spec:
 
                echo "Taking initial snapshot of cluster to $snapshot_dir..."
                kubectl exec -i -n ${ns} "${cluster}-bitnami-etcd-0" -c etcd -- /bin/sh -c "ETCD_SNAPSHOTS_DIR=$snapshot_dir /opt/bitnami/scripts/etcd/snapshot.sh"
+
+               snapshot_file=$(find ${snapshot_dir}/ -maxdepth 1 -type f -name 'db-*' | sort | tail -n 1 | sed 's/.*\///')
+               echo "Uploading snapshot ${snapshot_file} to ${http_s3_endpoint}..."
+               /tmp/upload-snapshot.py ${http_s3_endpoint} ${snapshot_file}
 
                echo "Editing etcd statefulset to no longer start from snapshot..."
 

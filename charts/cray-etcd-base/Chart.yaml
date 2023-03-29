@@ -23,21 +23,21 @@
 #
 apiVersion: v2
 name: cray-etcd-base
-version: 1.0.7
+version: 1.0.8
 description: This chart should never be installed directly, instead it is intended to be a sub-chart.
 home: https://github.com/Cray-HPE/cray-etcd
 dependencies:
   - name: etcd
-    version: 8.7.3
+    version: 8.8.1
     repository: https://charts.bitnami.com/bitnami
 maintainers:
   - name: bklei
 annotations:
   artifacthub.io/images: |
     - name: etcd
-      image: artifactory.algol60.net/csm-docker/stable/docker.io/bitnami/etcd:3.5.7-debian-11-r0-patch
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/bitnami/etcd:3.5.7-debian-11-r22-patch
     - name: bitnami-shell
-      image: artifactory.algol60.net/csm-docker/stable/docker.io/bitnami/bitnami-shell:11-debian-11-r79
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/bitnami/bitnami-shell:11-debian-11-r102
     - name: util
       image: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3:kubectl_v1_21_12_1.0.0.43797
   artifacthub.io/license: MIT
