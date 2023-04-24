@@ -300,19 +300,19 @@ tests:
           value: "true"
       - template: charts/etcd/templates/cronjob.yaml
         equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[6].name
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].name
           value: "ETCD_CERT_FILE"
       - template: charts/etcd/templates/cronjob.yaml
         equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[6].value
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].value
           value: "/opt/bitnami/etcd/certs/client/cert.pem"
       - template: charts/etcd/templates/cronjob.yaml
         equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].name
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[8].name
           value: "ETCD_KEY_FILE"
       - template: charts/etcd/templates/cronjob.yaml
         equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].value
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[8].value
           value: "/opt/bitnami/etcd/certs/client/key.pem"
       - template: charts/etcd/templates/cronjob.yaml
         equal:

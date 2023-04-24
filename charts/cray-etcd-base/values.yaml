@@ -47,7 +47,7 @@ etcd:
     image:
       registry: artifactory.algol60.net
       repository: csm-docker/stable/docker.io/bitnami/bitnami-shell
-      tag: 11-debian-11-r102
+      tag: 11-debian-11-r109
       digest: ""
       pullPolicy: IfNotPresent
   containerPorts:
@@ -63,7 +63,7 @@ etcd:
   image:
     registry: artifactory.algol60.net
     repository: csm-docker/stable/docker.io/bitnami/etcd
-    tag: 3.5.7-debian-11-r22-patch
+    tag: 3.5.8-debian-11-r3
     debug: false
   pullPolicy: IfNotPresent
   fullnameOverride: ""
