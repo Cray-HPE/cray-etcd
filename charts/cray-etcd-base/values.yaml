@@ -47,7 +47,7 @@ etcd:
     image:
       registry: artifactory.algol60.net
       repository: csm-docker/stable/docker.io/bitnami/bitnami-shell
-      tag: 11-debian-11-r109
+      tag: 11-debian-11-r128
       digest: ""
       pullPolicy: IfNotPresent
   containerPorts:
@@ -63,7 +63,7 @@ etcd:
   image:
     registry: artifactory.algol60.net
     repository: csm-docker/stable/docker.io/bitnami/etcd
-    tag: 3.5.8-debian-11-r3
+    tag: 3.5.9-debian-11-r15-patch
     debug: false
   pullPolicy: IfNotPresent
   fullnameOverride: ""
@@ -166,6 +166,8 @@ etcd:
       value: "10000"
     - name: ETCD_SNAPSHOT_HISTORY_LIMIT
       value: "24"
+    - name: ETCD_DISABLE_PRESTOP
+      value: "yes"
   podSecurityContext:
     enabled: true
     fsGroup: 1001
