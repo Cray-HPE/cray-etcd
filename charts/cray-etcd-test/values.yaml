@@ -1,0 +1,86 @@
+cray-service:
+  type: Deployment
+  nameOverride: cray-etcd-test
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - cray-etcd-test
+        topologyKey: "kubernetes.io/hostname"
+  replicaCount: 3
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 50%
+    type: RollingUpdate
+  containers:
+    busybox:
+      name: busybox
+      image:
+        repository: artifactory.algol60.net/csm-docker/stable/docker.io/library/busybox
+        tag: 1.28.0-glibc
+      command: ["sleep", "60000"]
+  etcdWaitContainer: true
+cray-etcd-base:
+  nameOverride: cray-etcd-test
+  etcd:
+    image:
+      registry: artifactory.algol60.net
+      repository: csm-docker/stable/docker.io/bitnami/etcd
+      tag: 3.5.9-debian-11-r15-patch
+      debug: true
+    disasterRecovery:
+      cronjob:
+        snapshotsDir: "/snapshots/cray-etcd-test-bitnami-etcd"
+        schedule: "0 */1 * * *"
+        historyLimit: 1
+        snapshotHistoryLimit: 24
+    enabled: true
+    fullnameOverride: "cray-etcd-test-bitnami-etcd"
+    persistence:
+      enabled: true
+      accessModes:
+        - "ReadWriteOnce"
+      size: 4Gi
+    extraEnvVars:
+      - name: ETCD_HEARTBEAT_INTERVAL
+        value: "4200"
+      - name: ETCD_ELECTION_TIMEOUT
+        value: "21000"
+      - name: ETCD_MAX_SNAPSHOTS
+        value: "1"
+      - name: ETCD_QUOTA_BACKEND_BYTES
+        value: "10737418240"
+      - name: ETCD_SNAPSHOT_COUNT
+        value: "5000000"
+      - name: ETCD_SNAPSHOT_HISTORY_LIMIT
+        value: "24"
+      - name: ETCD_DISABLE_PRESTOP
+        value: "yes"
+    autoCompactionMode: revision
+    autoCompactionRetention: "100000"
+    extraVolumeMounts:
+    - name: cray-etcd-test-config
+      mountPath: /usr/local/sbin
+      readOnly: true
+    - name: etcd-config
+      mountPath: /csm
+    extraVolumes:
+    - configMap:
+        defaultMode: 420
+        name: cray-etcd-test-bitnami-etcd-config
+      name: etcd-config
+    - configMap:
+        defaultMode: 0755
+        name: cray-etcd-test-config
+      name: cray-etcd-test-config
+    resources:
+      limits:
+        cpu: 4
+        memory: 8Gi
+      requests:
+        cpu: 10m
+        memory: 64Mi

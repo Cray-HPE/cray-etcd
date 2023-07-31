@@ -23,11 +23,14 @@ pipeline {
                     getChartVersion(name: "cray-etcd-backup",          chartDirectory: "charts", isStable: env.IS_STABLE),
                     getChartVersion(name: "cray-etcd-defrag",          chartDirectory: "charts", isStable: env.IS_STABLE),
                     getChartVersion(name: "cray-etcd-base",            chartDirectory: "charts", isStable: env.IS_STABLE),
-                    getChartVersion(name: "cray-etcd-migration-setup", chartDirectory: "charts", isStable: env.IS_STABLE)
+                    getChartVersion(name: "cray-etcd-migration-setup", chartDirectory: "charts", isStable: env.IS_STABLE),
+                    getChartVersion(name: "cray-etcd-test",            chartDirectory: "charts", isStable: env.IS_STABLE)
                 ].join(" ")
             }
             steps {
-                sh "make"
+                 withCredentials([usernamePassword(credentialsId: 'artifactory-algol60-readonly', passwordVariable: 'ARTIFACTORY_PASSWORD', usernameVariable: 'ARTIFACTORY_USERNAME')]) {
+                    sh "make"
+                }
             }
         }
 
