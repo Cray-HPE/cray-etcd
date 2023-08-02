@@ -50,3 +50,8 @@ data:
     advertise-client-urls: {{ printf "%s://POD_NAME.%s.%s.svc.%s:%d" $etcdPeerProtocol $etcdHeadlessServiceName $releaseNamespace $clusterDomain $clientPort }}
     listen-client-urls: http://0.0.0.0:{{ $clientPort }}
     data-dir: /bitnami/etcd/data
+{{- if .Values.etcd.extraEnvVars }}
+{{- range $key, $value := .Values.etcd.extraEnvVars }}
+{{ index $value "name" | replace "ETCD_" "" | replace "_" "-" | lower | indent 4 }}: {{ index $value "value" }}
+{{- end }}
+{{- end }}

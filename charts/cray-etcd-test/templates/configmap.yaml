@@ -21,9 +21,12 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 #
-chart-dirs:
-  - charts
-chart-repos:
-  - stable=https://charts.helm.sh/stable
-  - csm-algol60=https://artifactory.algol60.net/artifactory/csm-helm-charts/
-all: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cray-etcd-test-config
+  namespace: {{ .Release.Namespace }}
+data:
+  etcd-load.sh: |-
+    {{- .Files.Get "files/etcd-load.sh" | nindent 4 }}
