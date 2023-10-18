@@ -46,8 +46,8 @@ etcd:
     enabled: true
     image:
       registry: artifactory.algol60.net
-      repository: csm-docker/stable/docker.io/bitnami/bitnami-shell
-      tag: 11-debian-11-r128
+      repository: csm-docker/stable/docker.io/bitnami/os-shell
+      tag: 11-debian-11-r90
       digest: ""
       pullPolicy: IfNotPresent
   containerPorts:
@@ -63,7 +63,7 @@ etcd:
   image:
     registry: artifactory.algol60.net
     repository: csm-docker/stable/docker.io/bitnami/etcd
-    tag: 3.5.9-debian-11-r15-patch
+    tag: 3.5.9-debian-11-r148
     debug: false
   pullPolicy: IfNotPresent
   fullnameOverride: ""
@@ -181,5 +181,5 @@ etcd:
 util:
   image:
     repository: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3
-    tag: kubectl_v1_21_12_1.0.0.49259
+    tag: pet-utils-csm-1.6
     pullPolicy: IfNotPresent

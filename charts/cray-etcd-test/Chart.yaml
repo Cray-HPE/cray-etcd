@@ -40,4 +40,4 @@ maintainers:
 name: cray-etcd-test
 sources:
   - "https://github.com/Cray-HPE/cray-etcd-test"
-version: 1.0.0
+version: 1.1.0
