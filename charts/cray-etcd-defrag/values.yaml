@@ -8,7 +8,7 @@ fullnameOverride: ""
 kubectl:
   image:
     repository: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3
-    tag: kubectl_v1_21_12_1.0.0.49259
+    tag: pet-utils-csm-1.6
     pullPolicy: IfNotPresent
 
 crayEtcdDefrag:
@@ -17,5 +17,5 @@ crayEtcdDefrag:
 
 crayHbtdEtcdDefrag:
   defragCronSchedule: "0 */4 * * *"
-  etcdClusterName: "cray-hbtd-etcd"
+  etcdClusterName: "cray-hbtd-bitnami-etcd"
   ## This cronjob uses the same image as crayEtcdDefrag

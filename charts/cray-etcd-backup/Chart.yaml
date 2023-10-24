@@ -23,7 +23,7 @@
 #
 apiVersion: v2
 name: cray-etcd-backup
-version: 0.5.4
+version: 0.5.5
 description: Configures etcd cluster backups
 home: https://github.com/Cray-HPE/cray-etcd
 maintainers:
@@ -32,5 +32,5 @@ maintainers:
 annotations:
   artifacthub.io/images: |
     - name: util
-      image: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3:kubectl_v1_21_12_1.0.0.43797
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/demisto/boto3py3:pet-utils-csm-1.6
   artifacthub.io/license: MIT
