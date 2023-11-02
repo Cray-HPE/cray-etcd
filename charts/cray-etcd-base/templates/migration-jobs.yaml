@@ -67,12 +67,38 @@ spec:
                chown -R 1001:1001 $snapshot_dir
                ns={{ .Release.Namespace }}
                cluster="{{ include "cray-etcd-base.fullname" . }}"
+               ss_name="${cluster}-bitnami-etcd"
 
-               kubectl get endpoints ${cluster}-etcd-client -n ${ns} -o json > /dev/null 2>&1
-               if [[ $? -ne 0 ]]; then
-                  echo "${cluster}-etcd-client not found, assuming upgrade to bitnami chart has been completed..."
-                  exit 0
+               if ! kubectl get endpoints ${cluster}-etcd-client -n ${ns} -o json > /dev/null 2>&1 ; then
+                 #
+                 # There is no old etcd-operator managed chart installed, let's see if this
+                 # is a fresh install or upgrade.
+                 #
+                 has_label=$(kubectl get statefulsets.apps -n services -l 'app.kubernetes.io/component=etcd' --no-headers 2>/dev/null | awk "/${ss_name}/")
+                 if [ -n "$has_label" ]; then
+                   #
+                   # The new label has already been applied, we don't need to do
+                   # anything special here.
+                   #
+                   echo "The 'app.kubernetes.io/component=etcd' label has already been applied to ${ss_name}, continuing..."
+                   exit 0
+                 fi
+
+                 members=$(kubectl get pod -n $ns -o wide -o=custom-columns=NAME:.metadata.name | awk "/${ss_name}/ && !/snapshotter|defrag/")
+                 if [ -n "$members"  ]; then
+                   echo "Ensuring ${ss_name} members have 'app.kubernetes.io/component=etcd' label for bitnami 9.x chart upgrade..."
+                   for member in ${members}; do
+                     echo "Adding label to ${member}"
+                     kubectl label pod -n ${ns} ${member} app.kubernetes.io/component=etcd --overwrite
+                   done
+                   echo "Deleting statefulset for ${ss_name} allowing K8S to recreate"
+                   kubectl delete statefulset -n ${ns} ${ss_name} --cascade=orphan
+                 else
+                   echo "No previous installations detected requiring special handling..."
+                 fi
+                 exit 0
                fi
+
                echo "${cluster}-etcd-client found, proceeding with migrating current data..."
 
                cat > /tmp/upload-snapshot.py <<EOF
