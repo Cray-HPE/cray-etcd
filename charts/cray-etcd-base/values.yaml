@@ -65,10 +65,14 @@ etcd:
           env_val="$(eval echo \${${env_name}})"
           if [ -n "${env_val}" ]
           then
-              echo "${opt}: ${env_val}"
               if [ -z "$(cat /opt/bitnami/etcd/conf/etcd.yaml | grep ${opt}:)" ]
               then
-                echo "${opt}: ${env_val}" >> /opt/bitnami/etcd/conf/etcd.yaml
+                if [ "${opt}" = "auto-compaction-retention" ]
+                then
+                  echo "${opt}: \"${env_val}\"" >> /opt/bitnami/etcd/conf/etcd.yaml
+                else
+                  echo "${opt}: ${env_val}" >> /opt/bitnami/etcd/conf/etcd.yaml
+                fi
               fi
           fi
       done
