@@ -56,7 +56,25 @@ etcd:
   command:
     - "sh"
     - "-c"
-    - "cp /csm/etcd.conf.yml /opt/bitnami/etcd/conf/etcd.yaml; sed -i s/POD_NAME/${MY_POD_NAME}/ /opt/bitnami/etcd/conf/etcd.yaml; /opt/bitnami/scripts/etcd/entrypoint.sh /opt/bitnami/scripts/etcd/run.sh"
+    - |
+      cp /csm/etcd.conf.yml /opt/bitnami/etcd/conf/etcd.yaml
+      sed -i s/POD_NAME/${MY_POD_NAME}/ /opt/bitnami/etcd/conf/etcd.yaml
+      for opt in $(etcd --help 2>&1 | grep '^ *--' | sed -e 's/^ *--//' -e 's/ .*$//')
+      do
+          env_name=$(echo "${opt}" | sed -e 's/^/ETCD_/' -e 's/-/_/g' | tr '[:lower:]' '[:upper:]')
+          env_val="$(eval echo "\${${env_name}}")"
+          if [ -n "${env_val}" ]
+          then
+              if ! grep -q "${opt}:" /opt/bitnami/etcd/conf/etcd.yaml
+              then
+                  if [ "${opt}" = auto-compaction-retention ]; then
+                      env_val="\"${env_val}\""
+                  fi
+                  echo "${opt}: ${env_val}" >> /opt/bitnami/etcd/conf/etcd.yaml
+              fi
+          fi
+      done
+      /opt/bitnami/scripts/etcd/entrypoint.sh /opt/bitnami/scripts/etcd/run.sh
 
   enabled: true
   clusterDomain: cluster.local
