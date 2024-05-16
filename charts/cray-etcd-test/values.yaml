@@ -27,6 +27,9 @@ cray-service:
 cray-etcd-base:
   nameOverride: cray-etcd-test
   etcd:
+    auth:
+      client:
+        secureTransport: true
     disasterRecovery:
       cronjob:
         snapshotsDir: "/snapshots/cray-etcd-test-bitnami-etcd"
