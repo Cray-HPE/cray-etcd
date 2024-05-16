@@ -32,7 +32,7 @@ spec:
   duration: 720h
   renewBefore: 24h
   subject:
-    organization:
+    organizations:
     - Cray
   commonName: "{{ include "cray-etcd-base.fullname" . }}-{{ .Release.Namespace }}-server"
   isCA: false
@@ -64,7 +64,7 @@ spec:
   duration: 720h
   renewBefore: 24h
   subject:
-    organization:
+    organizations:
     - Cray
   commonName: "{{ include "cray-etcd-base.fullname" . }}-{{ .Release.Namespace }}-peer"
   isCA: false
@@ -93,7 +93,7 @@ spec:
   duration: 720h
   renewBefore: 24h
   subject:
-    organization:
+    organizations:
     - Cray
   commonName: "{{ include "cray-etcd-base.fullname" . }}-{{ .Release.Namespace }}-client"
   isCA: false
