@@ -38,7 +38,7 @@ spec:
   isCA: false
   privateKey:
     size: 2048
-    algorithm: rsa
+    algorithm: RSA
     encoding: PKCS1
   usages:
     - signing
@@ -70,7 +70,7 @@ spec:
   isCA: false
   privateKey:
     size: 2048
-    algorithm: rsa
+    algorithm: RSA
     encoding: PKCS1
   usages:
     - signing
@@ -99,7 +99,7 @@ spec:
   isCA: false
   privateKey:
     size: 2048
-    algorithm: rsa
+    algorithm: RSA
     encoding: PKCS1
   usages:
     - signing
