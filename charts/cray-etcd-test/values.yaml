@@ -30,6 +30,7 @@ cray-etcd-base:
     auth:
       client:
         secureTransport: true
+        issuer: "cert-manager-issuer-common"
     disasterRecovery:
       cronjob:
         snapshotsDir: "/snapshots/cray-etcd-test-bitnami-etcd"
