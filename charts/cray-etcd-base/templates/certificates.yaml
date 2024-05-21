@@ -23,7 +23,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 */}}
 {{- if .Values.etcd.auth.client.secureTransport -}}
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: "{{ include "cray-etcd-base.fullname" . }}-etcd-server-tls"
@@ -31,13 +31,15 @@ spec:
   secretName: "{{ include "cray-etcd-base.fullname" . }}-etcd-server-tls"
   duration: 720h
   renewBefore: 24h
-  organization:
-    - Cray
+  subject:
+    organizations:
+      - Cray
   commonName: "{{ include "cray-etcd-base.fullname" . }}-{{ .Release.Namespace }}-server"
   isCA: false
-  keySize: 2048
-  keyAlgorithm: rsa
-  keyEncoding: pkcs1
+  privateKey:
+    size: 2048
+    algorithm: RSA
+    encoding: PKCS1
   usages:
     - signing
     - key encipherment
@@ -53,7 +55,7 @@ spec:
     name: "{{ .Values.etcd.auth.client.issuer }}"
     kind: Issuer
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: "{{ include "cray-etcd-base.fullname" . }}-etcd-peer-tls"
@@ -61,13 +63,15 @@ spec:
   secretName: "{{ include "cray-etcd-base.fullname" . }}-etcd-peer-tls"
   duration: 720h
   renewBefore: 24h
-  organization:
-    - Cray
+  subject:
+    organizations:
+      - Cray
   commonName: "{{ include "cray-etcd-base.fullname" . }}-{{ .Release.Namespace }}-peer"
   isCA: false
-  keySize: 2048
-  keyAlgorithm: rsa
-  keyEncoding: pkcs1
+  privateKey:
+    size: 2048
+    algorithm: RSA
+    encoding: PKCS1
   usages:
     - signing
     - key encipherment
@@ -80,7 +84,7 @@ spec:
     name: "{{ .Values.etcd.auth.client.issuer }}"
     kind: Issuer
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: "{{ include "cray-etcd-base.fullname" . }}-etcd-tls"
@@ -88,13 +92,15 @@ spec:
   secretName: "{{ include "cray-etcd-base.fullname" . }}-etcd-tls"
   duration: 720h
   renewBefore: 24h
-  organization:
-    - Cray
+  subject:
+    organizations:
+      - Cray
   commonName: "{{ include "cray-etcd-base.fullname" . }}-{{ .Release.Namespace }}-client"
   isCA: false
-  keySize: 2048
-  keyAlgorithm: rsa
-  keyEncoding: pkcs1
+  privateKey:
+    size: 2048
+    algorithm: RSA
+    encoding: PKCS1
   usages:
     - signing
     - key encipherment

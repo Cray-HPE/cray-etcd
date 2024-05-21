@@ -27,6 +27,11 @@ cray-service:
 cray-etcd-base:
   nameOverride: cray-etcd-test
   etcd:
+    auth:
+      client:
+        secureTransport: true
+        issuer: "cert-manager-issuer-common"
+        existingSecret: "cray-etcd-test-bitnami-etcd-jwt-token"
     disasterRecovery:
       cronjob:
         snapshotsDir: "/snapshots/cray-etcd-test-bitnami-etcd"
