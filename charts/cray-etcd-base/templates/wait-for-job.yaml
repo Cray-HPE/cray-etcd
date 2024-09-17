@@ -46,7 +46,7 @@ spec:
           {{- if .Values.etcd.auth.client.secureTransport }}
           - until etcdctl --ca-file /tls/ca.crt --cert-file /tls/tls.crt --key-file /tls/tls.key --endpoints https://$ETCD_HOST:$ETCD_PORT member list | grep started | wc -l | grep -q $ETCD_NUM_REPLICAS; do echo "Waiting for etcd cluster"; sleep 2; done; echo 'ETCD READY';
           {{- else }}
-          - until etcdctl --endpoints http://$ETCD_HOST:$ETCD_PORT member list | grep started | wc -l | grep -q $ETCD_NUM_REPLICAS; do echo "Waiting for etcd cluster"; sleep 2; done; echo 'ETCD READY';
+          - until etcdctl --endpoints http://$ETCD_HOST:$ETCD_PORT member list | grep started | wc -l | grep -q $ETCD_NUM_REPLICAS; do echo "Waiting for etcd cluster"; sleep 2; done; echo 'ETCD READY'; #continue
           {{- end }}
           env:
             - name: ETCD_HOST
