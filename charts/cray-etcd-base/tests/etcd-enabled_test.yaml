@@ -135,11 +135,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[23].name
+          path: spec.template.spec.containers[0].env[22].name
           value: "ETCD_HEARTBEAT_INTERVAL"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[23].value
+          path: spec.template.spec.containers[0].env[22].value
           value: "4200"
   - it: should enable leader election timeout
     set:
@@ -147,11 +147,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[24].name
+          path: spec.template.spec.containers[0].env[23].name
           value: "ETCD_ELECTION_TIMEOUT"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[24].value
+          path: spec.template.spec.containers[0].env[23].value
           value: "21000"
   - it: should enable maximum snapshots
     set:
@@ -159,11 +159,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[25].name
+          path: spec.template.spec.containers[0].env[24].name
           value: "ETCD_MAX_SNAPSHOTS"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[25].value
+          path: spec.template.spec.containers[0].env[24].value
           value: "5"
   - it: should include 10GB max if maxQuota is set
     set:
@@ -171,11 +171,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[26].name
+          path: spec.template.spec.containers[0].env[25].name
           value: "ETCD_QUOTA_BACKEND_BYTES"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[26].value
+          path: spec.template.spec.containers[0].env[25].value
           value: "10737418240"
   - it: should support overriding ETCD_QUOTA_BACKEND_BYTES
     set:
@@ -186,11 +186,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[26].name
+          path: spec.template.spec.containers[0].env[25].name
           value: "ETCD_QUOTA_BACKEND_BYTES"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[26].value
+          path: spec.template.spec.containers[0].env[25].value
           value: "12345"
   - it: should set ETCD_SNAPSHOT_COUNT to 10000 by default
     set:
@@ -198,11 +198,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[27].name
+          path: spec.template.spec.containers[0].env[26].name
           value: "ETCD_SNAPSHOT_COUNT"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[27].value
+          path: spec.template.spec.containers[0].env[26].value
           value: "10000"
   - it: should support overriding ETCD_SNAPSHOT_COUNT
     set:
@@ -213,11 +213,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[27].name
+          path: spec.template.spec.containers[0].env[26].name
           value: "ETCD_SNAPSHOT_COUNT"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[27].value
+          path: spec.template.spec.containers[0].env[26].value
           value: "5"
   - it: should include hard/required podAntiAffinity (default)
     set:
@@ -284,11 +284,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[23].name
+          path: spec.template.spec.containers[0].env[22].name
           value: "ETCD_AUTO_TLS"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[23].value
+          path: spec.template.spec.containers[0].env[22].value
           value: "true"
       - template: charts/etcd/templates/cronjob.yaml
         equal:
