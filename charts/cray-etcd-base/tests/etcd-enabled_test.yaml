@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022, 2025 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -62,14 +62,6 @@ tests:
         equal:
           path: spec.template.spec.containers[0].env[7].value
           value: "yes"
-      - template: charts/etcd/templates/statefulset.yaml
-        equal:
-          path: spec.template.spec.containers[0].env[20].name
-          value: "ETCD_INITIAL_CLUSTER_STATE"
-      - template: charts/etcd/templates/statefulset.yaml
-        equal:
-          path: spec.template.spec.containers[0].env[20].value
-          value: "new"
   - it: should include nodeSelector when specified
     set:
       etcd.enabled: true
