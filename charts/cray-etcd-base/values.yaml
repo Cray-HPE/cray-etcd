@@ -132,7 +132,7 @@ etcd:
   autoCompactionMode: periodic
   # ‘periodic’ for duration based retention, defaulting to hours if no time unit is provided (e.g. ‘5m’).
   # ‘revision’ for revision number based retention.
-  autoCompactionRetention: 1  # Auto compaction retention. 0 means disable auto compaction.
+  autoCompactionRetention: "1"  # Auto compaction retention in hour. 0 means disable auto compaction.
   # if compactionMode == periodic, then compactionRetention is the time on which compaction should trigger. default (1 hour)
   # if compactionMode == revision, then compactionRetention is the number of revisions at when compaction will get trigger.
   podAnnotations: {}
