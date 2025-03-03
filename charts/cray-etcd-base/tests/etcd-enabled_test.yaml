@@ -308,7 +308,7 @@ tests:
           value: "/opt/bitnami/etcd/certs/client/key.pem"
       - template: charts/etcd/templates/cronjob-snapshotter.yaml
         equal:
-          path: spec.jobTemplate.spec.template.spec.volumes[0].secret.secretName
+          path: spec.jobTemplate.spec.template.spec.volumes[1].secret.secretName
           value: "foo"
   - it: should include priorityClassName when specified
     set:
