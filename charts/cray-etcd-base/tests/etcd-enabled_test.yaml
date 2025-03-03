@@ -26,7 +26,7 @@ suite: statefulset test for etcd enabled
 templates:
   - charts/etcd/templates/statefulset.yaml
   - charts/etcd/templates/token-secrets.yaml
-  - charts/etcd/templates/cronjob.yaml
+  - charts/etcd/templates/cronjob-snapshotter.yaml
   - certificates.yaml
 tests:
   - it: should render 1 etcd statefulset
