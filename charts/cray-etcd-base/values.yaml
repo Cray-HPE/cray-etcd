@@ -27,12 +27,13 @@ global:
   chart:
     name: ""  # set at deploy time automatically, no need to ever set explicitly
     version: ""  # set at deploy time automatically, no need to ever set explicitly
+  security:
+    allowInsecureImages: true
 labels: {}
 annotations: {}
 nameOverride: ""  # the name of your service
 fullnameOverride: ""  # use this if you want to provide a more-complete name for certain labels/naming (very optional)
-security:
-  allowInsecureImages: false
+
 
 #
 # See the following for parameter descriptions and full list of
