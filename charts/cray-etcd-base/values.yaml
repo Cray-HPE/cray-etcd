@@ -124,11 +124,11 @@ etcd:
     client:
       secureTransport: false
       useAutoTLS: false
-      existingSecret: ""
+      existingSecret: "{{ include "cray-etcd-base.fullname" . }}-etcd-server-tls"
       enableAuthentication: false
-      certFilename: cert.pem
-      certKeyFilename: key.pem
-      caFilename: ""
+      certFilename: "tls.crt"
+      certKeyFilename: "tls.key"
+      caFilename: "ca.crt"
       issuer: "cert-manager-issuer-common"
   autoCompactionMode: periodic
   # ‘periodic’ for duration based retention, defaulting to hours if no time unit is provided (e.g. ‘5m’).
