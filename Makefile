@@ -49,8 +49,8 @@ test:
 package:
 ifdef CHART_VERSIONS
 	CMD="package charts/cray-etcd-backup          --version $(word 1, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-base            --version $(word 3, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-test            --version $(word 4, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-base            --version $(word 2, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-test            --version $(word 3, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
 else
 	CMD="package charts/* -d packages" $(MAKE) helm
 endif
