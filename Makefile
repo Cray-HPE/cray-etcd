@@ -29,16 +29,12 @@ helm:
 
 lint:
 	CMD="lint charts/cray-etcd-backup"          $(MAKE) helm
-	CMD="lint charts/cray-etcd-defrag"          $(MAKE) helm
 	CMD="lint charts/cray-etcd-base"            $(MAKE) helm
-	CMD="lint charts/cray-etcd-migration-setup" $(MAKE) helm
 	CMD="lint charts/cray-etcd-test"            $(MAKE) helm
 
 dep-up:
 	CMD="dep up charts/cray-etcd-backup"          $(MAKE) helm
-	CMD="dep up charts/cray-etcd-defrag"          $(MAKE) helm
 	CMD="dep up charts/cray-etcd-base"            $(MAKE) helm
-	CMD="dep up charts/cray-etcd-migration-setup" $(MAKE) helm
 	CMD="dep up charts/cray-etcd-test"            $(MAKE) helm
 
 test:
@@ -47,17 +43,13 @@ test:
 		-v ${PWD}/charts:/apps \
 		${HELM_UNITTEST_IMAGE} \
 		cray-etcd-backup \
-		cray-etcd-defrag \
 		cray-etcd-base \
-		cray-etcd-migration-setup \
 		cray-etcd-test
 
 package:
 ifdef CHART_VERSIONS
 	CMD="package charts/cray-etcd-backup          --version $(word 1, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-defrag          --version $(word 2, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
 	CMD="package charts/cray-etcd-base            --version $(word 3, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-migration-setup --version $(word 4, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
 	CMD="package charts/cray-etcd-test            --version $(word 4, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
 else
 	CMD="package charts/* -d packages" $(MAKE) helm
@@ -74,9 +66,7 @@ annotated-images:
 
 images:
 	{ CHART=charts/cray-etcd-backup          $(MAKE) -s extracted-images annotated-images; \
-	  CHART=charts/cray-etcd-defrag          $(MAKE) -s extracted-images annotated-images; \
 	  CHART=charts/cray-etcd-base            $(MAKE) -s extracted-images annotated-images; \
-	  CHART=charts/cray-etcd-migration-setup $(MAKE) -s extracted-images annotated-images; \
 	  CHART=charts/cray-etcd-test            $(MAKE) -s extracted-images annotated-images; \
 	} | sort -u
 
