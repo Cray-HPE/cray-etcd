@@ -124,7 +124,6 @@ etcd:
     client:
       secureTransport: false
       useAutoTLS: false
-      existingSecret: "{{ include "cray-etcd-base.fullname" . }}-etcd-server-tls"
       enableAuthentication: false
       certFilename: "tls.crt"
       certKeyFilename: "tls.key"
