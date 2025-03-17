@@ -22,10 +22,10 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 apiVersion: v2
-appVersion: 1.0.0
+appVersion: 1.3.0
 dependencies:
 - name: cray-service
-  version: "~10.0.0"
+  version: "~11.1.0"
   repository: https://artifactory.algol60.net/artifactory/csm-helm-charts
 - name: cray-etcd-base
   version: "1.2.0-20240516154242+ff2fc0e"
@@ -40,4 +40,4 @@ maintainers:
 name: cray-etcd-test
 sources:
   - "https://github.com/Cray-HPE/cray-etcd-test"
-version: 1.2.0
+version: 1.3.0
