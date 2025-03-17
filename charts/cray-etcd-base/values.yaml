@@ -195,6 +195,59 @@ etcd:
     runAsUser: 1001
     runAsNonRoot: true
     allowPrivilegeEscalation: false
+  defrag:
+    ## @param defrag.enabled Enable automatic defragmentation. This is most effective when paired with auto compaction: consider setting "autoCompactionRetention > 0".
+    enabled: true
+    cronjob:
+      startingDeadlineSeconds: ""
+      schedule: "0 0 * * *"
+      concurrencyPolicy: Forbid
+      suspend: false
+      successfulJobsHistoryLimit: 1
+      failedJobsHistoryLimit: 1
+      labels: {}
+      annotations: {}
+      activeDeadlineSeconds: ""
+      restartPolicy: OnFailure
+      podLabels: {}
+      podAnnotations: {}
+      podSecurityContext:
+        enabled: true
+        fsGroupChangePolicy: Always
+        sysctls: []
+        supplementalGroups: []
+        fsGroup: 1001
+      containerSecurityContext:
+        enabled: true
+        seLinuxOptions: {}
+        runAsUser: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
+        privileged: false
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: "RuntimeDefault"
+      nodeSelector: {}
+      tolerations: []
+      serviceAccountName: ""
+      command: []
+      args: []
+      resourcesPreset: "nano"
+      ## @param defrag.cronjob.resources [object] Set container requests and limits for different resources like CPU or
+      ## memory (essential for production workloads)
+      ## Example:
+      ## resources:
+      ##   requests:
+      ##     cpu: 2
+      ##     memory: 512Mi
+      ##   limits:
+      ##     cpu: 3
+      ##     memory: 1024Mi
+      ##
+      resources: {}
 
 
 util:
