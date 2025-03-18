@@ -34,7 +34,6 @@ annotations: {}
 nameOverride: ""  # the name of your service
 fullnameOverride: ""  # use this if you want to provide a more-complete name for certain labels/naming (very optional)
 
-
 #
 # See the following for parameter descriptions and full list of
 # variables available to override:
