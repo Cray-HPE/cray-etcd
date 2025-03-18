@@ -43,11 +43,7 @@ spec:
           command:
           - /bin/sh
           - -c
-          {{- if .Values.etcd.auth.client.secureTransport }}
-          - until etcdctl --ca-file /tls/ca.crt --cert-file /tls/tls.crt --key-file /tls/tls.key --endpoints https://$ETCD_HOST:$ETCD_PORT member list | grep started | wc -l | grep -q $ETCD_NUM_REPLICAS; do echo "Waiting for etcd cluster"; sleep 2; done; echo 'ETCD READY';
-          {{- else }}
           - until etcdctl --endpoints http://$ETCD_HOST:$ETCD_PORT member list | grep started | wc -l | grep -q $ETCD_NUM_REPLICAS; do echo "Waiting for etcd cluster"; sleep 2; done; echo 'ETCD READY';
-          {{- end }}
           env:
             - name: ETCD_HOST
               value: "{{ include "cray-etcd-base.fullname" . }}-bitnami-etcd.{{ .Release.Namespace }}.svc"
@@ -55,14 +51,4 @@ spec:
               value: "2379"
             - name: ETCD_NUM_REPLICAS
               value: "3"
-      {{- if .Values.etcd.auth.client.secureTransport }}
-          volumeMounts:
-          - name: tls
-            mountPath: "/tls"
-            readOnly: true
-      volumes:
-      - name: tls
-        secret:
-          secretName: "{{ include "cray-etcd-base.fullname" . }}-etcd-tls"
-      {{- end }}
 {{- end }}

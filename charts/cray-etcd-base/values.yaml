@@ -110,6 +110,8 @@ etcd:
     timeoutSeconds: 5
     successThreshold: 1
     failureThreshold: 20
+  token:
+    createSecret: false
   auth:
     rbac:
       create: false
@@ -124,11 +126,11 @@ etcd:
     client:
       secureTransport: false
       useAutoTLS: false
+      existingSecret: ""
       enableAuthentication: false
-      certFilename: "tls.crt"
-      certKeyFilename: "tls.key"
-      caFilename: "ca.crt"
-      issuer: "cert-manager-issuer-common"
+      certFilename: cert.pem
+      certKeyFilename: key.pem
+      caFilename: ""
   autoCompactionMode: periodic
   # ‘periodic’ for duration based retention, defaulting to hours if no time unit is provided (e.g. ‘5m’).
   # ‘revision’ for revision number based retention.
