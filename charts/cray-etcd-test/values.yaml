@@ -29,7 +29,7 @@ cray-etcd-base:
   etcd:
     auth:
       client:
-        secureTransport: true
+        secureTransport: false
         issuer: "cert-manager-issuer-common"
         existingSecret: "cray-etcd-test-bitnami-etcd-jwt-token"
     disasterRecovery:
