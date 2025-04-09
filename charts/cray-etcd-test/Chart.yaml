@@ -28,7 +28,7 @@ dependencies:
   version: "~12.0.0"
   repository: https://artifactory.algol60.net/artifactory/csm-helm-charts
 - name: cray-etcd-base
-  version: "1.3.1-20250317193425+f6a8616"
+  version: "1.3.1-20250409143436+d935930"
   repository: https://artifactory.algol60.net/artifactory/csm-helm-charts
 description: "Test etcd chart"
 home: "https://github.com/Cray-HPE/cray-etcd-test"
