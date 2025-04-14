@@ -180,7 +180,7 @@ etcd:
     - name: ETCD_MAX_SNAPSHOTS
       value: "5"
     - name: ETCD_QUOTA_BACKEND_BYTES
-      value: "10737418240"
+      value: "2147483648" # 2 GB
     - name: ETCD_SNAPSHOT_COUNT
       value: "10000"
     - name: ETCD_SNAPSHOT_HISTORY_LIMIT
@@ -249,6 +249,8 @@ etcd:
       ##
       resources: {}
 
+snapshotterPvc:
+  volumeSize: 100G
 
 util:
   image:

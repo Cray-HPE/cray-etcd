@@ -1,0 +1,140 @@
+{{- /*
+MIT License
+
+(C) Copyright 2025 Hewlett Packard Enterprise Development LP
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+*/}}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "cray-etcd-base.fullname" . }}-pre-upgrade"
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      name: "{{ include "cray-etcd-base.fullname" . }}-pre-upgrade"
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: Never
+      serviceAccountName: cray-etcd-upgrade
+      volumes:
+      - name: snapshot-volume
+        persistentVolumeClaim:
+          claimName: bitnami-etcd-snapshotter
+      containers:
+        - name: pre-upgrade-etcd-backup
+          image: {{ .Values.util.image.repository }}:{{ .Values.util.image.tag }}
+          imagePullPolicy: {{ .Values.util.image.pullPolicy }}
+          volumeMounts:
+          - name: snapshot-volume
+            mountPath: /snapshots
+          command:
+            - '/bin/sh'
+          args:
+            - "-c"
+            - |
+               snapshot_dir="/snapshots/{{ include "cray-etcd-base.fullname" . }}-bitnami-etcd"
+               snapshot_file="{{ include "cray-etcd-base.fullname" . }}_etcd_upgrade.snapshot-{{ .Release.Revision }}.db"
+               echo "Creating $snapshot_dir directory for snapshots..."
+               mkdir -p $snapshot_dir
+               echo "Changing ownership of $snapshot_dir to etcd user"
+               chown -R 1001:1001 $snapshot_dir
+               ns={{ .Release.Namespace }}
+               cluster="{{ include "cray-etcd-base.fullname" . }}"
+               ss_name="${cluster}-bitnami-etcd"
+
+               if ! kubectl get statefulset ${cluster}-bitnami-etcd -n ${ns} > /dev/null 2>&1 ; then
+                 #
+                 # There is no etcd statefulset deployed. This is not an upgrade so there is nothing to backup. 
+                 #
+                 echo "This is an install of this chart, no snapshot is needed before install."
+                 exit 0
+               fi
+
+               echo "${cluster}-bitnami-etcd cluster found, proceeding with backup of current data..."
+
+               cat > /tmp/upload-snapshot.py <<EOF
+               #!/usr/bin/env python3
+
+               import boto3
+               import sys
+
+               def main():
+                   s3 = boto3.resource('s3', endpoint_url=sys.argv[1])
+                   bucket = s3.Bucket('etcd-backup')
+                   file_name="/tmp/%s" % (sys.argv[2])
+                   key_name="{{ include "cray-etcd-base.fullname" . }}/%s" % (sys.argv[2])
+                   bucket.upload_file(Filename=file_name, Key=key_name)
+
+               if __name__ == '__main__':
+                   main()
+               EOF
+               chmod 755 /tmp/upload-snapshot.py
+
+               pods=$(kubectl get endpoints ${cluster}-etcd-client -n ${ns} -o jsonpath='{.subsets[*].addresses[*].targetRef.name}')
+               for pod in $pods
+               do
+                 echo "Taking snapshot from ${pod}..."
+                 kubectl exec -i -n ${ns} ${pod} -c etcd -- /bin/sh -c 'ETCDCTL_API=3 etcdctl snapshot save snapshot.db'
+                 if [ $? -eq 0 ]; then
+                   echo "Copying snapshot from ${pod} to /tmp/${snapshot_file}..."
+                   kubectl -n ${ns} -c etcd cp $pod:snapshot.db /tmp/${snapshot_file}
+                   if [ $? -eq 0 ]; then
+                     break
+                   fi
+                 fi
+               done
+
+               echo "Grabbing keys and S3 endpoint from etcd-backup-s3-credentials..."
+               access_key=$(kubectl get secret -n services etcd-backup-s3-credentials -ojsonpath='{.data.access_key}' | base64 -d)
+               secret_key=$(kubectl get secret -n services etcd-backup-s3-credentials -ojsonpath='{.data.secret_key}' | base64 -d)
+               http_s3_endpoint=$(kubectl get secret -n services  etcd-backup-s3-credentials -ojsonpath='{.data.http_s3_endpoint}' | base64 -d)
+
+               mkdir -p /root/.aws
+               cat > /root/.aws/credentials <<EOF
+               [default]
+               aws_access_key_id = $access_key
+               aws_secret_access_key = $secret_key
+               EOF
+
+               cat > /root/.aws/config <<EOF
+               [default]
+               region=foo
+               EOF
+
+               echo "Uploading snapshot ${snapshot_file} to ${http_s3_endpoint}..."
+               /tmp/upload-snapshot.py ${http_s3_endpoint} ${snapshot_file}
+               echo "Done!"
+
+               echo "Since this etcd cluster already exists, environment variables used to initalize an etcd cluster will be removed."
+               kubectl set env statefulset -n ${ns} ${cluster}-bitnami-etcd ETCD_INITIAL_CLUSTER_STATE-
+               kubectl set env statefulset -n ${ns} ${cluster}-bitnami-etcd ETCD_INITIAL_CLUSTER-
+               kubectl set env statefulset -n ${ns} ${cluster}-bitnami-etcd ETCD_INITIAL_ADVERTISE_PEER_URLS-
+               kubectl set env statefulset -n ${ns} ${cluster}-bitnami-etcd ETCD_INITIAL_CLUSTER_TOKEN-
+               echo "Done removing environment variables."

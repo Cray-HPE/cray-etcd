@@ -28,7 +28,7 @@ description: This chart should never be installed directly, instead it is intend
 home: https://github.com/Cray-HPE/cray-etcd
 dependencies:
   - name: etcd
-    version: 11.1.0
+    version: 11.2.3
     repository: https://charts.bitnami.com/bitnami
 maintainers:
   - name: bklei
