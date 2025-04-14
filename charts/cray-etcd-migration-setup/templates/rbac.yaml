@@ -1,7 +1,7 @@
 {{- /*
 MIT License
 
-(C) Copyright 2025 Hewlett Packard Enterprise Development LP
+(C) Copyright 2023 Hewlett Packard Enterprise Development LP
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -24,12 +24,12 @@ OTHER DEALINGS IN THE SOFTWARE.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: "cray-etcd-upgrade"
+  name: "cray-etcd-migration"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: cray-etcd-upgrade-role
+  name: cray-etcd-migration-role
 rules:
 - apiGroups:
   - ""
@@ -39,6 +39,7 @@ rules:
   - pods/exec
   - endpoints
   - statefulsets
+  - statefulsets/scale
   - secrets
   - persistentvolumeclaims
   verbs:
@@ -48,7 +49,6 @@ rules:
   - "patch"
   - "delete"
   - "watch"
-  - "set"
 - apiGroups:
   - "etcd.database.coreos.com"
   resources:
@@ -67,12 +67,12 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: cray-etcd-upgrade-role-binding
+  name: cray-etcd-migration-role-binding
 subjects:
 - kind: ServiceAccount
-  name: cray-etcd-upgrade
+  name: cray-etcd-migration
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: cray-etcd-upgrade-role
+  name: cray-etcd-migration-role
