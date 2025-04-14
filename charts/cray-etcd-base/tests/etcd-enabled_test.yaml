@@ -175,7 +175,7 @@ tests:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
           path: spec.template.spec.containers[0].env[25].value
-          value: "10737418240"
+          value: "2147483648"
   - it: should support overriding ETCD_QUOTA_BACKEND_BYTES
     set:
       etcd.enabled: true
