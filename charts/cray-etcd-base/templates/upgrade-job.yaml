@@ -73,7 +73,7 @@ spec:
                  #
                  # There is no etcd statefulset deployed. This is not an upgrade so there is nothing to backup. 
                  #
-                 echo "This is an install of this chart, no snapshot is needed before install."
+                 echo "This is an install of this chart, no snapshot will be taken before install."
                  exit 0
                fi
 
@@ -131,6 +131,39 @@ spec:
                echo "Uploading snapshot ${snapshot_file} to ${http_s3_endpoint}..."
                /tmp/upload-snapshot.py ${http_s3_endpoint} ${snapshot_file}
                echo "Done!"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "cray-etcd-base.fullname" . }}-post-upgrade"
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    helm.sh/hook: post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      name: "{{ include "cray-etcd-base.fullname" . }}-post-upgrade"
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: Never
+      serviceAccountName: cray-etcd-migration
+      containers:
+        - name: post-upgrade-remove-init-env
+          image: {{ .Values.util.image.repository }}:{{ .Values.util.image.tag }}
+          imagePullPolicy: {{ .Values.util.image.pullPolicy }}
+          command:
+            - '/bin/sh'
+          args:
+            - "-c"
+            - |
+               ns={{ .Release.Namespace }}
+               cluster="{{ include "cray-etcd-base.fullname" . }}"
 
                echo "Since this etcd cluster already exists, environment variables used to initalize an etcd cluster will be removed."
                kubectl set env statefulset -n ${ns} ${cluster}-bitnami-etcd ETCD_INITIAL_CLUSTER_STATE-

@@ -49,7 +49,7 @@ etcd:
     image:
       registry: artifactory.algol60.net
       repository: csm-docker/stable/docker.io/bitnami/os-shell
-      tag: 12-debian-12-r38
+      tag: 12-debian-12-r40
       digest: ""
       pullPolicy: IfNotPresent
   containerPorts:
@@ -83,7 +83,7 @@ etcd:
   image:
     registry: artifactory.algol60.net
     repository: csm-docker/stable/docker.io/bitnami/etcd
-    tag: 3.5.18-debian-12-r5
+    tag: 3.5.21-debian-12-r1
     debug: false
   pullPolicy: IfNotPresent
   fullnameOverride: ""
@@ -248,9 +248,6 @@ etcd:
       ##     memory: 1024Mi
       ##
       resources: {}
-
-snapshotterPvc:
-  volumeSize: 100G
 
 util:
   image:
