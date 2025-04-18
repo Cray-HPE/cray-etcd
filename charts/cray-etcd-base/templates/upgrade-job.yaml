@@ -42,7 +42,7 @@ spec:
         sidecar.istio.io/inject: "false"
     spec:
       restartPolicy: Never
-      serviceAccountName: cray-etcd-upgrade
+      serviceAccountName: cray-etcd-migration
       volumes:
       - name: snapshot-volume
         persistentVolumeClaim:
@@ -97,7 +97,7 @@ spec:
                EOF
                chmod 755 /tmp/upload-snapshot.py
 
-               pods=$(kubectl get endpoints ${cluster}-etcd-client -n ${ns} -o jsonpath='{.subsets[*].addresses[*].targetRef.name}')
+               pods=$(kubectl get endpoints ${cluster}-bitnami-etcd -n ${ns} -o jsonpath='{.subsets[*].addresses[*].targetRef.name}')
                for pod in $pods
                do
                  echo "Taking snapshot from ${pod}..."
