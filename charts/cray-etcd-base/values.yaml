@@ -197,7 +197,8 @@ etcd:
     allowPrivilegeEscalation: false
   defrag:
     ## @param defrag.enabled Enable automatic defragmentation. This is most effective when paired with auto compaction: consider setting "autoCompactionRetention > 0".
-    enabled: true
+    ## This is not enabled becasue the defrag cronjob in the cray-etcd-degrag chart takes care of this already.
+    enabled: false
     cronjob:
       startingDeadlineSeconds: ""
       schedule: "0 0 * * *"

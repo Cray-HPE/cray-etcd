@@ -1,4 +1,4 @@
-# Copyright 2021 Hewlett Packard Enterprise Development LP
+# Copyright 2021, 2025 Hewlett Packard Enterprise Development LP
 
 CHART_METADATA_IMAGE ?= artifactory.algol60.net/csm-docker/stable/chart-metadata
 YQ_IMAGE ?= artifactory.algol60.net/docker.io/mikefarah/yq:4
@@ -29,12 +29,14 @@ helm:
 
 lint:
 	CMD="lint charts/cray-etcd-backup"          $(MAKE) helm
+	CMD="lint charts/cray-etcd-defrag"          $(MAKE) helm
 	CMD="lint charts/cray-etcd-base"            $(MAKE) helm
 	CMD="lint charts/cray-etcd-migration-setup" $(MAKE) helm
 	CMD="lint charts/cray-etcd-test"            $(MAKE) helm
 
 dep-up:
 	CMD="dep up charts/cray-etcd-backup"          $(MAKE) helm
+	CMD="dep up charts/cray-etcd-defrag"          $(MAKE) helm
 	CMD="dep up charts/cray-etcd-base"            $(MAKE) helm
 	CMD="dep up charts/cray-etcd-migration-setup" $(MAKE) helm
 	CMD="dep up charts/cray-etcd-test"            $(MAKE) helm
@@ -45,6 +47,7 @@ test:
 		-v ${PWD}/charts:/apps \
 		${HELM_UNITTEST_IMAGE} \
 		cray-etcd-backup \
+		cray-etcd-defrag \
 		cray-etcd-base \
 		cray-etcd-migration-setup \
 		cray-etcd-test
@@ -52,9 +55,10 @@ test:
 package:
 ifdef CHART_VERSIONS
 	CMD="package charts/cray-etcd-backup          --version $(word 1, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-base            --version $(word 2, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-migration-setup --version $(word 3, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
-	CMD="package charts/cray-etcd-test            --version $(word 4, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-defrag          --version $(word 2, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-base            --version $(word 3, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-migration-setup --version $(word 4, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
+	CMD="package charts/cray-etcd-test            --version $(word 5, $(CHART_VERSIONS)) -d packages" $(MAKE) helm
 else
 	CMD="package charts/* -d packages" $(MAKE) helm
 endif
@@ -70,6 +74,7 @@ annotated-images:
 
 images:
 	{ CHART=charts/cray-etcd-backup          $(MAKE) -s extracted-images annotated-images; \
+	  CHART=charts/cray-etcd-defrag          $(MAKE) -s extracted-images annotated-images; \
 	  CHART=charts/cray-etcd-base            $(MAKE) -s extracted-images annotated-images; \
 	  CHART=charts/cray-etcd-migration-setup $(MAKE) -s extracted-images annotated-images; \
 	  CHART=charts/cray-etcd-test            $(MAKE) -s extracted-images annotated-images; \

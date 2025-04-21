@@ -50,7 +50,7 @@ cray-etcd-base:
       - name: ETCD_QUOTA_BACKEND_BYTES
         value: "2147483648"
       - name: ETCD_SNAPSHOT_COUNT
-        value: "15000"
+        value: "10000"
       - name: ETCD_SNAPSHOT_HISTORY_LIMIT
         value: "24"
       - name: ETCD_DISABLE_PRESTOP
