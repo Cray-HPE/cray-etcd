@@ -57,8 +57,8 @@ while true; do
   kubectl scale statefulset -n "${ns}" "${cluster}-bitnami-etcd" --replicas=0
   kubectl rollout status statefulset -n "${ns}" "${cluster}-bitnami-etcd" --timeout 90s
 
-  echo "Setting cluster state for ${cluster} to 'new' and to start from snapshot"
-  kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_START_FROM_SNAPSHOT=yes ETCD_INIT_SNAPSHOT_FILENAME=${snapshot} ETCD_INIT_SNAPSHOTS_DIR=/snapshots/${cluster}-bitnami-etcd ETCD_INITIAL_CLUSTER_STATE=new
+  echo "Setting cluster for ${cluster} to start from snapshot"
+  kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_START_FROM_SNAPSHOT=yes ETCD_INIT_SNAPSHOT_FILENAME=${snapshot} ETCD_INIT_SNAPSHOTS_DIR=/snapshots/${cluster}-bitnami-etcd
 
   pvc="data-${cluster}-bitnami-etcd"
   echo "Deleting existing PVC's..."
@@ -75,6 +75,3 @@ while true; do
     continue
   fi
 done
-
-echo "Setting cluster state for ${cluster} to back to 'existing'"
-kubectl set env statefulset -n "${ns}" "${cluster}-bitnami-etcd" ETCD_START_FROM_SNAPSHOT=no ETCD_INITIAL_CLUSTER_STATE=existing
