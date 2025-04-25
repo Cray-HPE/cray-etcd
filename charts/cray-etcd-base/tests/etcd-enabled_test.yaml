@@ -273,42 +273,6 @@ tests:
         equal:
           path: spec.template.spec.containers[0].resources.requests.memory
           value: 44Mi
-  - it: should enable TLS when set
-    set:
-      etcd.enabled: true
-      etcd.auth.client.secureTransport: true
-      etcd.auth.client.useAutoTLS: true
-      etcd.auth.client.existingSecret: "foo"
-      etcd.auth.client.enableAuthentication: true
-    asserts:
-      - template: charts/etcd/templates/statefulset.yaml
-        equal:
-          path: spec.template.spec.containers[0].env[22].name
-          value: "ETCD_AUTO_TLS"
-      - template: charts/etcd/templates/statefulset.yaml
-        equal:
-          path: spec.template.spec.containers[0].env[22].value
-          value: "true"
-      - template: charts/etcd/templates/cronjob-snapshotter.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].name
-          value: "ETCD_CERT_FILE"
-      - template: charts/etcd/templates/cronjob-snapshotter.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].value
-          value: "/opt/bitnami/etcd/certs/client/cert.pem"
-      - template: charts/etcd/templates/cronjob-snapshotter.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[8].name
-          value: "ETCD_KEY_FILE"
-      - template: charts/etcd/templates/cronjob-snapshotter.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[8].value
-          value: "/opt/bitnami/etcd/certs/client/key.pem"
-      - template: charts/etcd/templates/cronjob-snapshotter.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.volumes[1].secret.secretName
-          value: "foo"
   - it: should include priorityClassName when specified
     set:
       etcd.priorityClassName: csm-high-priority-service

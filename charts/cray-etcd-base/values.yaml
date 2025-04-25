@@ -114,22 +114,6 @@ etcd:
   auth:
     rbac:
       create: false
-    peer:
-      secureTransport: false
-      useAutoTLS: false
-      existingSecret: ""
-      enableAuthentication: false
-      certFilename: cert.pem
-      certKeyFilename: key.pem
-      caFilename: ""
-    client:
-      secureTransport: false
-      useAutoTLS: false
-      existingSecret: ""
-      enableAuthentication: false
-      certFilename: cert.pem
-      certKeyFilename: key.pem
-      caFilename: ""
   autoCompactionMode: periodic
   # ‘periodic’ for duration based retention, defaulting to hours if no time unit is provided (e.g. ‘5m’).
   # ‘revision’ for revision number based retention.
