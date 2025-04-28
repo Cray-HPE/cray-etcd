@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022, 2025 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,8 @@ global:
   chart:
     name: ""  # set at deploy time automatically, no need to ever set explicitly
     version: ""  # set at deploy time automatically, no need to ever set explicitly
+  security:
+    allowInsecureImages: true
 labels: {}
 annotations: {}
 nameOverride: ""  # the name of your service
@@ -47,7 +49,7 @@ etcd:
     image:
       registry: artifactory.algol60.net
       repository: csm-docker/stable/docker.io/bitnami/os-shell
-      tag: 11-debian-11-r90
+      tag: 12-debian-12-r40
       digest: ""
       pullPolicy: IfNotPresent
   containerPorts:
@@ -81,7 +83,7 @@ etcd:
   image:
     registry: artifactory.algol60.net
     repository: csm-docker/stable/docker.io/bitnami/etcd
-    tag: 3.5.9-debian-11-r148
+    tag: 3.5.21-debian-12-r1
     debug: false
   pullPolicy: IfNotPresent
   fullnameOverride: ""
@@ -107,33 +109,17 @@ etcd:
     timeoutSeconds: 5
     successThreshold: 1
     failureThreshold: 20
+  token:
+    createSecret: false
   auth:
     rbac:
       create: false
-    peer:
-      secureTransport: false
-      useAutoTLS: false
-      existingSecret: ""
-      enableAuthentication: false
-      certFilename: cert.pem
-      certKeyFilename: key.pem
-      caFilename: ""
-    client:
-      secureTransport: false
-      useAutoTLS: false
-      existingSecret: ""
-      enableAuthentication: false
-      certFilename: cert.pem
-      certKeyFilename: key.pem
-      caFilename: ""
-      issuer: "cert-manager-issuer-common"
   autoCompactionMode: periodic
   # ‘periodic’ for duration based retention, defaulting to hours if no time unit is provided (e.g. ‘5m’).
   # ‘revision’ for revision number based retention.
-  autoCompactionRetention: 1  # Auto compaction retention. 0 means disable auto compaction.
+  autoCompactionRetention: "1"  # Auto compaction retention in hour. 0 means disable auto compaction.
   # if compactionMode == periodic, then compactionRetention is the time on which compaction should trigger. default (1 hour)
   # if compactionMode == revision, then compactionRetention is the number of revisions at when compaction will get trigger.
-  removeMemberOnContainerTermination: false
   podAnnotations: {}
   replicaCount: 3
   labels: {}
@@ -150,7 +136,6 @@ etcd:
       - "ReadWriteOnce"
     size: 3Gi  # A bit of headroom above 2GB quota default
   priorityClassName: ""
-  initialClusterState: new
   startFromSnapshot:
     enabled: false
     existingClaim: ""
@@ -179,7 +164,7 @@ etcd:
     - name: ETCD_MAX_SNAPSHOTS
       value: "5"
     - name: ETCD_QUOTA_BACKEND_BYTES
-      value: "10737418240"
+      value: "2147483648"  # 2 GB
     - name: ETCD_SNAPSHOT_COUNT
       value: "10000"
     - name: ETCD_SNAPSHOT_HISTORY_LIMIT
@@ -194,7 +179,60 @@ etcd:
     runAsUser: 1001
     runAsNonRoot: true
     allowPrivilegeEscalation: false
-
+  defrag:
+    ## @param defrag.enabled Enable automatic defragmentation. This is most effective when paired with auto compaction: consider setting "autoCompactionRetention > 0".
+    ## This is not enabled becasue the defrag cronjob in the cray-etcd-degrag chart takes care of this already.
+    enabled: false
+    cronjob:
+      startingDeadlineSeconds: ""
+      schedule: "0 0 * * *"
+      concurrencyPolicy: Forbid
+      suspend: false
+      successfulJobsHistoryLimit: 1
+      failedJobsHistoryLimit: 1
+      labels: {}
+      annotations: {}
+      activeDeadlineSeconds: ""
+      restartPolicy: OnFailure
+      podLabels: {}
+      podAnnotations: {}
+      podSecurityContext:
+        enabled: true
+        fsGroupChangePolicy: Always
+        sysctls: []
+        supplementalGroups: []
+        fsGroup: 1001
+      containerSecurityContext:
+        enabled: true
+        seLinuxOptions: {}
+        runAsUser: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
+        privileged: false
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: "RuntimeDefault"
+      nodeSelector: {}
+      tolerations: []
+      serviceAccountName: ""
+      command: []
+      args: []
+      resourcesPreset: "nano"
+      ## @param defrag.cronjob.resources [object] Set container requests and limits for different resources like CPU or
+      ## memory (essential for production workloads)
+      ## Example:
+      ## resources:
+      ##   requests:
+      ##     cpu: 2
+      ##     memory: 512Mi
+      ##   limits:
+      ##     cpu: 3
+      ##     memory: 1024Mi
+      ##
+      resources: {}
 
 util:
   image:

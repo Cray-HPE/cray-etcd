@@ -27,11 +27,6 @@ cray-service:
 cray-etcd-base:
   nameOverride: cray-etcd-test
   etcd:
-    auth:
-      client:
-        secureTransport: true
-        issuer: "cert-manager-issuer-common"
-        existingSecret: "cray-etcd-test-bitnami-etcd-jwt-token"
     disasterRecovery:
       cronjob:
         snapshotsDir: "/snapshots/cray-etcd-test-bitnami-etcd"
@@ -51,17 +46,17 @@ cray-etcd-base:
       - name: ETCD_ELECTION_TIMEOUT
         value: "21000"
       - name: ETCD_MAX_SNAPSHOTS
-        value: "1"
+        value: "2"
       - name: ETCD_QUOTA_BACKEND_BYTES
-        value: "10737418240"
+        value: "2147483648"
       - name: ETCD_SNAPSHOT_COUNT
-        value: "5000000"
+        value: "10000"
       - name: ETCD_SNAPSHOT_HISTORY_LIMIT
         value: "24"
       - name: ETCD_DISABLE_PRESTOP
         value: "yes"
-    autoCompactionMode: revision
-    autoCompactionRetention: "100000"
+    autoCompactionMode: periodic
+    autoCompactionRetention: "1"
     extraVolumeMounts:
     - name: cray-etcd-test-config
       mountPath: /usr/local/sbin

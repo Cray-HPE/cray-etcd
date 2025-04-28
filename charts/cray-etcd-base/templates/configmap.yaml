@@ -37,9 +37,9 @@ data:
     {{- $releaseNamespace := .Release.Namespace }}
     {{- $etcdHeadlessServiceName := (printf "%s-%s" $etcdFullname "headless" | trunc 63 | trimSuffix "-") }}
     {{- $clusterDomain := .Values.etcd.clusterDomain }}
-    {{- $etcdPeerProtocol := include "cray-etcd-base.peerProtocol" . }}
-    {{- $etcdClientProtocol := include "cray-etcd-base.clientProtocol" . }}
     {{- $initialCluster := list }}
+    {{- $etcdPeerProtocol := "http" }}
+    {{- $etcdClientProtocol := "http" }}
     {{- range $e, $i := until $replicaCount }}
     {{- $initialCluster = append $initialCluster (printf "%s-%d=%s://%s-%d.%s.%s.svc.%s:%d" $etcdFullname $i $etcdPeerProtocol $etcdFullname $i $etcdHeadlessServiceName $releaseNamespace $clusterDomain $peerPort) }}
     {{- end }}

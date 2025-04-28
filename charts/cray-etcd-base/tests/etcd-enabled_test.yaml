@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022, 2025 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -26,8 +26,7 @@ suite: statefulset test for etcd enabled
 templates:
   - charts/etcd/templates/statefulset.yaml
   - charts/etcd/templates/token-secrets.yaml
-  - charts/etcd/templates/cronjob.yaml
-  - certificates.yaml
+  - charts/etcd/templates/cronjob-snapshotter.yaml
 tests:
   - it: should render 1 etcd statefulset
     set:
@@ -62,14 +61,6 @@ tests:
         equal:
           path: spec.template.spec.containers[0].env[7].value
           value: "yes"
-      - template: charts/etcd/templates/statefulset.yaml
-        equal:
-          path: spec.template.spec.containers[0].env[20].name
-          value: "ETCD_INITIAL_CLUSTER_STATE"
-      - template: charts/etcd/templates/statefulset.yaml
-        equal:
-          path: spec.template.spec.containers[0].env[20].value
-          value: "new"
   - it: should include nodeSelector when specified
     set:
       etcd.enabled: true
@@ -143,11 +134,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[23].name
+          path: spec.template.spec.containers[0].env[22].name
           value: "ETCD_HEARTBEAT_INTERVAL"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[23].value
+          path: spec.template.spec.containers[0].env[22].value
           value: "4200"
   - it: should enable leader election timeout
     set:
@@ -155,11 +146,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[24].name
+          path: spec.template.spec.containers[0].env[23].name
           value: "ETCD_ELECTION_TIMEOUT"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[24].value
+          path: spec.template.spec.containers[0].env[23].value
           value: "21000"
   - it: should enable maximum snapshots
     set:
@@ -167,11 +158,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[25].name
+          path: spec.template.spec.containers[0].env[24].name
           value: "ETCD_MAX_SNAPSHOTS"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[25].value
+          path: spec.template.spec.containers[0].env[24].value
           value: "5"
   - it: should include 10GB max if maxQuota is set
     set:
@@ -179,12 +170,12 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[26].name
+          path: spec.template.spec.containers[0].env[25].name
           value: "ETCD_QUOTA_BACKEND_BYTES"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[26].value
-          value: "10737418240"
+          path: spec.template.spec.containers[0].env[25].value
+          value: "2147483648"
   - it: should support overriding ETCD_QUOTA_BACKEND_BYTES
     set:
       etcd.enabled: true
@@ -194,11 +185,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[26].name
+          path: spec.template.spec.containers[0].env[25].name
           value: "ETCD_QUOTA_BACKEND_BYTES"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[26].value
+          path: spec.template.spec.containers[0].env[25].value
           value: "12345"
   - it: should set ETCD_SNAPSHOT_COUNT to 10000 by default
     set:
@@ -206,11 +197,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[27].name
+          path: spec.template.spec.containers[0].env[26].name
           value: "ETCD_SNAPSHOT_COUNT"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[27].value
+          path: spec.template.spec.containers[0].env[26].value
           value: "10000"
   - it: should support overriding ETCD_SNAPSHOT_COUNT
     set:
@@ -221,11 +212,11 @@ tests:
     asserts:
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[27].name
+          path: spec.template.spec.containers[0].env[26].name
           value: "ETCD_SNAPSHOT_COUNT"
       - template: charts/etcd/templates/statefulset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[27].value
+          path: spec.template.spec.containers[0].env[26].value
           value: "5"
   - it: should include hard/required podAntiAffinity (default)
     set:
@@ -282,42 +273,6 @@ tests:
         equal:
           path: spec.template.spec.containers[0].resources.requests.memory
           value: 44Mi
-  - it: should enable TLS when set
-    set:
-      etcd.enabled: true
-      etcd.auth.client.secureTransport: true
-      etcd.auth.client.useAutoTLS: true
-      etcd.auth.client.existingSecret: "foo"
-      etcd.auth.client.enableAuthentication: true
-    asserts:
-      - template: charts/etcd/templates/statefulset.yaml
-        equal:
-          path: spec.template.spec.containers[0].env[23].name
-          value: "ETCD_AUTO_TLS"
-      - template: charts/etcd/templates/statefulset.yaml
-        equal:
-          path: spec.template.spec.containers[0].env[23].value
-          value: "true"
-      - template: charts/etcd/templates/cronjob.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].name
-          value: "ETCD_CERT_FILE"
-      - template: charts/etcd/templates/cronjob.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[7].value
-          value: "/opt/bitnami/etcd/certs/client/cert.pem"
-      - template: charts/etcd/templates/cronjob.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[8].name
-          value: "ETCD_KEY_FILE"
-      - template: charts/etcd/templates/cronjob.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[8].value
-          value: "/opt/bitnami/etcd/certs/client/key.pem"
-      - template: charts/etcd/templates/cronjob.yaml
-        equal:
-          path: spec.jobTemplate.spec.template.spec.volumes[0].secret.secretName
-          value: "foo"
   - it: should include priorityClassName when specified
     set:
       etcd.priorityClassName: csm-high-priority-service
@@ -334,53 +289,3 @@ tests:
       - template: charts/etcd/templates/statefulset.yaml
         isNull:
           path: spec.template.spec.priorityClassName
-  - it: should create TLS certificate requests for server cert when TLS is enabled
-    set:
-      etcd.enabled: true
-      etcd.auth.client.secureTransport: true
-      etcd.auth.client.useAutoTLS: true
-      etcd.auth.client.existingSecret: "foo"
-      etcd.auth.client.enableAuthentication: true
-    asserts:
-      - template: certificates.yaml
-        documentIndex: 0
-        equal:
-          path: spec.dnsNames
-          value:
-          - '*.RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc'
-          - '*.RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc.cluster.local'
-          - RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc
-          - RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc.cluster.local
-          - localhost
-      - template: certificates.yaml
-        documentIndex: 0
-        equal:
-          path: spec.issuerRef.name
-          value: cert-manager-issuer-common
-      - template: certificates.yaml
-        documentIndex: 0
-        equal:
-          path: spec.commonName
-          value: RELEASE-NAME-cray-etcd-base-NAMESPACE-server
-      - template: certificates.yaml
-        documentIndex: 1
-        equal:
-          path: spec.commonName
-          value: RELEASE-NAME-cray-etcd-base-NAMESPACE-peer
-      - template: certificates.yaml
-        documentIndex: 1
-        equal:
-          path: spec.dnsNames
-          value:
-          - '*.RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc'
-          - '*.RELEASE-NAME-cray-etcd-base-etcd.NAMESPACE.svc.cluster.local'
-      - template: certificates.yaml
-        documentIndex: 1
-        equal:
-          path: spec.issuerRef.name
-          value: cert-manager-issuer-common
-      - template: certificates.yaml
-        documentIndex: 2
-        equal:
-          path: spec.commonName
-          value: RELEASE-NAME-cray-etcd-base-NAMESPACE-client
