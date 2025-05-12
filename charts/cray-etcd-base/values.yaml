@@ -41,6 +41,14 @@ fullnameOverride: ""  # use this if you want to provide a more-complete name for
 # https://github.com/bitnami/charts/tree/main/bitnami/etcd#parameters
 #
 etcd:
+{{- if .Capabilities.APIVersions.Has "policy/v1beta1/PodSecurityPolicy" }}
+  # When running with PSP, "seccompProfile" is not allowed to
+  # be set to anything, so to allow charts to run with PSP
+  # this needs to be removed.  This will allow this chart to
+  # be deployed on CSM 1.6.
+  containerSecurityContext:
+    seccompProfile: null
+{{- end}}
   extraVolumeMounts:
   - mountPath: /csm
     name: etcd-config
@@ -143,6 +151,10 @@ etcd:
   disasterRecovery:
     enabled: true
     cronjob:
+{{- if .Capabilities.APIVersions.Has "policy/v1beta1/PodSecurityPolicy" }}
+      containerSecurityContext:
+        seccompProfile: null
+{{- end}}
       snapshotsDir: "/snapshots"
       schedule: "0 */1 * * *"
       historyLimit: 1
@@ -213,8 +225,12 @@ etcd:
         allowPrivilegeEscalation: false
         capabilities:
           drop: ["ALL"]
+{{- if .Capabilities.APIVersions.Has "policy/v1beta1/PodSecurityPolicy" }}
+        seccompProfile: null
+{{- else -}}
         seccompProfile:
           type: "RuntimeDefault"
+{{- end}}
       nodeSelector: {}
       tolerations: []
       serviceAccountName: ""
@@ -233,6 +249,11 @@ etcd:
       ##     memory: 1024Mi
       ##
       resources: {}
+{{- if .Capabilities.APIVersions.Has "policy/v1beta1/PodSecurityPolicy" }}
+  preUpgradeJob:
+    containerSecurityContext:
+      seccompProfile: null
+{{- end}}
 
 util:
   image:
