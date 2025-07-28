@@ -49,7 +49,7 @@ etcd:
     image:
       registry: artifactory.algol60.net
       repository: csm-docker/stable/docker.io/bitnami/os-shell
-      tag: 12-debian-12-r40
+      tag: 12-debian-12-r49
       digest: ""
       pullPolicy: IfNotPresent
   containerPorts:
@@ -83,7 +83,7 @@ etcd:
   image:
     registry: artifactory.algol60.net
     repository: csm-docker/stable/docker.io/bitnami/etcd
-    tag: 3.5.21-debian-12-r1
+    tag: 3.5.21-debian-12-r6
     debug: false
   pullPolicy: IfNotPresent
   fullnameOverride: ""
@@ -181,7 +181,7 @@ etcd:
     allowPrivilegeEscalation: false
   defrag:
     ## @param defrag.enabled Enable automatic defragmentation. This is most effective when paired with auto compaction: consider setting "autoCompactionRetention > 0".
-    ## This is not enabled becasue the defrag cronjob in the cray-etcd-degrag chart takes care of this already.
+    ## This is not enabled because the defrag cronjob in the cray-etcd-defrag chart takes care of this already.
     enabled: false
     cronjob:
       startingDeadlineSeconds: ""
