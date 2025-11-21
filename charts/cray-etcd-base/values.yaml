@@ -179,6 +179,18 @@ etcd:
     runAsUser: 1001
     runAsNonRoot: true
     allowPrivilegeEscalation: false
+  networkPolicy:
+    enabled: true
+    extraIngress:
+      # Allow Victoria Metrics agent from sysmgmt-health namespace to gather metrics
+      # from the istio sidecar in bitnami-etcd pods
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: sysmgmt-health
+        ports:
+        - port: 15020
+          protocol: TCP
   defrag:
     ## @param defrag.enabled Enable automatic defragmentation. This is most effective when paired with auto compaction: consider setting "autoCompactionRetention > 0".
     ## This is not enabled because the defrag cronjob in the cray-etcd-defrag chart takes care of this already.

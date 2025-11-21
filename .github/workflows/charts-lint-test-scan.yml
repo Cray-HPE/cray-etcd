@@ -11,6 +11,7 @@ jobs:
   lint-test-scan:
     uses: Cray-HPE/.github/.github/workflows/charts-lint-test-scan.yml@main
     with:
+      target-branch: ${{ github.event.pull_request.base.ref || 'master' }}
       lint-charts: ${{ github.event_name == 'pull_request' }}
       test-charts: false
       scan-chart-snyk-args: "--severity-threshold=high --policy-path=charts/.snyk"
